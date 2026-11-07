@@ -97,3 +97,6 @@
 #demo-result .demo-scope{color:#667f71;font-size:11px;border-top:1px solid #dbe6dd;padding-top:8px}
 #demo-result img{display:block;width:100%;max-height:270px;object-fit:contain;margin-top:12px;border:1px solid #d7e5da;border-radius:10px}
 @media(max-width:510px){.demo-lab{margin:12px 14px 16px;padding:15px}}
+
+/* Keep Send and microphone controls reachable on narrow phones. */
+@media(max-width:510px){.composer-bottom{flex-wrap:wrap}.send-controls{margin-left:auto}}
