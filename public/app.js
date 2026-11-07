@@ -21,6 +21,13 @@ const officialLink = $('#official-link');
 const scopeText = $('#scope-text');
 const copyReportButton = $('#copy-report');
 const browserInvestigation = $('#browser-investigation');
+const demoLab = $('#demo-lab');
+const demoShortcut = $('#demo-shortcut');
+const demoScenario = $('#demo-scenario');
+const demoRun = $('#demo-run');
+const demoProgress = $('#demo-progress');
+const demoResult = $('#demo-result');
+let demoActive = false;
 const quoteSource = $('#quote-source');
 const inspectSource = $('#inspect-source');
 const browserProgress = $('#browser-progress');
@@ -116,6 +123,7 @@ function quickActions(area) {
 }
 function updateEvidence(data) {
   if (buyConfirmDialog.open) buyConfirmDialog.close('cancel');
+  demoActive=false;
   report = data;
   pendingQuote = null;
   quoteExpiresAt = 0;
@@ -181,7 +189,7 @@ async function send(raw, force = 'auto') {
       message('assistant',`${data.label}. ${reply}`,data.explanation?.method || 'prepared-text',quickActions);
       if(data.explanation?.method !== 'groq') voiceMessage('Live AI was unavailable for this explanation; the evidence result is unchanged.');
     } else {
-      const response=report && lastScanInput ? await jsonPost('/api/chat',{question:text,input:lastScanInput,language,history:conversation}) : await jsonPost('/api/ask',{question:text,language,history:conversation});
+      const response=demoActive ? await jsonPost('/api/demo/ask',{question:text,language,history:conversation}) : report && lastScanInput ? await jsonPost('/api/chat',{question:text,input:lastScanInput,language,history:conversation}) : await jsonPost('/api/ask',{question:text,language,history:conversation});
       loading.remove();
       message('assistant',response.answer?.text || 'No answer available.',response.answer?.method || 'prepared-text');
       if(response.answer?.method === 'prepared-text') voiceMessage('Groq could not answer this turn; offline guidance was shown. Check your API quota or connection.');
@@ -220,7 +228,7 @@ $('#new-chat').addEventListener('click',()=>{
   const desc=document.createElement('p');desc.textContent='Paste a link, share a forwarded message, or ask about online safety.';
   welcome.append(icon,kicker,title,desc);chat.append(welcome);
   if (buyConfirmDialog.open) buyConfirmDialog.close('cancel');
-  report=null;lastScanInput=null;conversation=[];pendingQuote=null;quoteExpiresAt=0;browserInvestigation.hidden=true;input.value='';evidenceResult.hidden=true;evidenceEmpty.hidden=false;evidenceIndicator.textContent='NO CHECK YET';input.focus();
+  report=null;lastScanInput=null;demoActive=false;conversation=[];pendingQuote=null;quoteExpiresAt=0;browserInvestigation.hidden=true;input.value='';evidenceResult.hidden=true;evidenceEmpty.hidden=false;evidenceIndicator.textContent='NO CHECK YET';input.focus();
 });
 copyReportButton.addEventListener('click',async()=>{
   if(!report)return;
@@ -228,6 +236,34 @@ copyReportButton.addEventListener('click',async()=>{
   try { await navigator.clipboard.writeText(text);copyReportButton.textContent='Copied ✓';}
   catch {copyReportButton.textContent='Could not copy';}
   setTimeout(()=>{copyReportButton.textContent='Copy evidence report ↗';},1600);
+});
+
+// Separate local-only investigation lab. Inspecting a synthetic page never spends
+// funds or opens a user-supplied URL. Results are not real-world phishing verdicts.
+demoShortcut.addEventListener('click',()=>{
+  if(demoLab.hidden){message('assistant','The local browser lab is disabled. Start the local server with OYACHECK_DEMO_BROWSER=1 to use synthetic training pages.','local-guard');return;}
+  demoLab.scrollIntoView({behavior:'smooth',block:'center'});
+  demoScenario.focus();
+});
+demoRun.addEventListener('click',async()=>{
+  if(demoRun.disabled || demoLab.hidden)return;
+  demoRun.disabled=true;demoProgress.textContent='Launching isolated local Chromium and inspecting the synthetic page…';
+  demoResult.hidden=true;demoResult.replaceChildren();
+  try{
+    const d=await jsonPost('/api/demo/inspect',{scenario:demoScenario.value});
+    if(d.kind!=='controlled-browser-demo'||!Array.isArray(d.observations)||d.payment!==null||!d.scope.includes('synthetic'))throw new Error('Unexpected demonstration evidence');
+    demoActive=true;report=null;lastScanInput=null;conversation=[];
+    demoResult.hidden=false;
+    const heading=document.createElement('strong');heading.textContent=d.finding;demoResult.append(heading);
+    const title=document.createElement('p');title.textContent=`Rendered page: ${d.page.title}`;demoResult.append(title);
+    const url=document.createElement('p');url.textContent=`Final sample URL: ${d.page.finalUrl}`;demoResult.append(url);
+    for(const line of d.observations){const para=document.createElement('p');para.textContent='• '+line;demoResult.append(para);}
+    const scope=document.createElement('p');scope.className='demo-scope';scope.textContent=d.scope;demoResult.append(scope);
+    if(d.screenshotId){const img=document.createElement('img');img.alt='Screenshot of the controlled synthetic training page rendered in local Chromium';img.loading='lazy';img.src='/api/demo/screenshot/'+d.screenshotId;demoResult.append(img);}
+    demoProgress.textContent='Synthetic page inspected; no form submitted and no payment made.';
+    message('assistant',`I inspected a controlled training page in local Chromium. ${d.observations.join(' ')} This is browser-observed test evidence, not a verdict about a public website. Ask me about these findings.`, 'demo');
+  }catch(e){demoProgress.textContent=`Browser lab did not finish: ${e.message}`;message('assistant',demoProgress.textContent,'error');}
+  finally{demoRun.disabled=false;}
 });
 
 // This code never opens the submitted URL. Only the fixed, verified NCC advisory
@@ -292,6 +328,9 @@ buyDialogApprove.addEventListener('click',async()=>{
 
 fetch('/api/health').then(r=>r.json()).then(health=>{
   browserSandboxEnabled = health.sourceInspectionSandboxEnabled === true;
+  demoLab.hidden=health.localBrowserDemo!==true;
+  demoShortcut.hidden=health.localBrowserDemo!==true;
+  if(health.localBrowserDemo && !health.localBrowserAvailable){demoProgress.textContent='Chromium is not installed. Set CHROMIUM_PATH or install chromium.';demoRun.disabled=true;}
   quoteSource.disabled = !browserSandboxEnabled;
   const configured=health.aiConfigured===true;
   aiStatus.classList.toggle('online',configured);
