@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OyaCheck · Registration review</title><link rel="stylesheet" href="/review.css"><script type="module" src="/review.js"></script></head>
+<body><main><p>OYACHECK · LOCAL OPERATOR REVIEW</p><h1>Review the agent registration</h1>
+<p>This page prepares a Celo registration. It cannot sign or send a transaction. Account access is a separate, optional review step.</p>
+<p id="status" role="status">Loading saved preview…</p><button id="refresh">Refresh read-only checks</button>
+<dl id="details"></dl><h2>Exact unsigned request</h2><pre id="transaction"></pre>
+<h2>Optional MetaMask account check</h2><p>Network and account must match the preview. No network switch, signature or transaction authorization is requested here.</p>
+<label>Wallet extension <select id="provider"><option value="">Select MetaMask</option></select></label>
+<label><input id="reviewed" type="checkbox"> I reviewed the network, wallet, registry, function, URI, fees and zero value. I want to request account access only.</label>
+<button id="connect" disabled>Check MetaMask account · no signing</button><p id="wallet" role="status">Connected wallet: not checked.</p>
+<p>Stop here. Registration needs a separate human approval. After a genuine receipt exists, use the read-only receipt verifier to obtain the actual agent ID.</p>
+</main></body></html>

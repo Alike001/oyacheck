@@ -10,7 +10,7 @@ import { REGISTER, REGISTERED, TRANSFER, registrationTransaction, auditOwnedIden
 const metadata = JSON.parse(await readFile(new URL('../public/agent-registration.json',import.meta.url),'utf8'));
 const hash = '0x'+'a'.repeat(64), blockHash = '0x'+'b'.repeat(64);
 const address = '0x'+'2'.repeat(40);
-const block = { number:'0x100',hash:blockHash,timestamp:'0x1000' };
+const block = { number:'0x100',hash:blockHash,timestamp:'0x1000',baseFeePerGas:'0x1' };
 function fixture(overrides = {}) {
   const log = {address:IDENTITY_REGISTRY, ...AbiEvent.encode(REGISTERED,{agentId:7n,owner:OWNER_AGENT_WALLET}),
     data:AbiParameters.encode(AbiParameters.from('string'),[AGENT_URI])};
@@ -28,10 +28,13 @@ function fixture(overrides = {}) {
     if (method === 'eth_getBalance') return '0x0';
     if (method === 'eth_estimateGas') return '0x30000';
     if (method === 'eth_gasPrice') return '0x1';
+    if (method === 'eth_maxPriorityFeePerGas') return '0x1';
     if (method === 'eth_getTransactionReceipt') return receipt;
     if (method === 'eth_getTransactionByHash') return transaction;
     if (method === 'eth_call') {
+      if (params[0].to.toLowerCase()==='0x420000000000000000000000000000000000000f') return AbiParameters.encode(AbiParameters.from('uint256'),[0n]);
       const selector = params[0].data.slice(0,10);
+      if (selector==='0xf2c298be') return AbiFunction.encodeResult(REGISTER,999n);
       for (const [signature,value] of [
         ['function balanceOf(address) view returns(uint256)',0n],
         ['function ownerOf(uint256) view returns(address)',OWNER_AGENT_WALLET],
@@ -114,4 +117,32 @@ test('stable public metadata route is JSON and does not enable financial endpoin
   assert.deepEqual(await response.json(),metadata);
   assert.equal(metadata.x402Support,false);assert.equal(metadata.services.length,1);assert.equal(metadata.services[0].name,'web');
   for (const path of ['/api/mainnet/session','/api/buy/quote','/api/buy/inspect']) assert.equal((await fetch(origin+path)).status,403);
+});
+
+test('fresh tagged simulation, fee buffer and oracle bounds determine registration readiness',async()=>{
+  const f=fixture({eth_getBalance:()=> '0xffffffffff'});
+  const result=await registrationPreview(f.rpc,metadata,async()=>Response.json(metadata));
+  assert.equal(result.simulation.passed,true);
+  assert.equal(result.gas.feeBudget.gasLimit,'235930');
+  assert.equal(result.gas.feeBudget.maxFeePerGasWei,'3');
+  assert.equal(result.gas.feeBudget.recommendedReserveWei,'707790');
+  assert.equal(BigInt(result.preparedRequest.gas),235930n);
+  assert.equal(BigInt(result.preparedRequest.maxFeePerGas),3n);
+  assert.equal(result.preparedRequest.data,result.transaction.data);
+  assert.equal(result.registrationReady,true);
+  assert.equal(result.authorizedToSignOrBroadcast,false);
+  assert.equal(Object.hasOwn(result,'agentId'),false,'Predicted agent ID must not be published as evidence');
+  assert.equal(Object.hasOwn(result.simulation,'agentId'),false);
+});
+test('simulation and oracle failures keep registration blocked',async()=>{
+  for (const location of ['registry','oracle']){
+    const f=fixture();const rpc=async(method,params)=>{
+      if(method==='eth_call'&&((location==='registry'&&params[0].data.startsWith('0xf2c298be'))||
+        (location==='oracle'&&params[0].to.toLowerCase()==='0x420000000000000000000000000000000000000f')))throw new Error('Simulation unavailable');
+      return f.rpc(method,params);
+    };
+    const result=await registrationPreview(rpc,metadata,async()=>Response.json(metadata));
+    assert.equal(result.registrationReady,false);
+    assert.ok(result.gas.simulationError||result.gas.feeError);
+  }
 });

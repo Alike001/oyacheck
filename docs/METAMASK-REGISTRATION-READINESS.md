@@ -1,237 +1,190 @@
-# OyaCheck: unsigned MetaMask registration readiness
+# OyaCheck: fresh preregistration review
 
-Prepared 2026-11-07 from `42ab6def0afce199c182b973e0ecfbea28c72f70` on
-`fix/ai-reliability-mobile`. This is local preparation, not permission to publish,
-fund, sign, register, broadcast or submit. The deadline is 2026-11-09 09:00 GMT.
+Updated 2026-11-07. No signing, broadcast, registration, spending, push or
+deployment was performed in this check. Productiondeployment was performed
+by the owner; Render independently reports `4a1ab5bd57d4f2c7c8aa75f8a79e2b6d045b9b81`
+live as deploy `dep-dbnk7emc6qcc73e4ia6g`.
 
-## Owner-confirmed configuration
+## Public metadata and identity
 
-- Wallet: `0x9Ceaa6aBFb2bC1aC202f96496Cdc683d86Bc458a` (valid checksum).
-- Network: Celo mainnet, chain `42220` / `0xa4ec`.
-- Identity registry: `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`.
-- Event code: `celo_03e76ac742c7`.
-- Intended stable agentURI: `https://oyacheck-beta.onrender.com/agent-registration.json`.
+The exact stable HTTPS URI is
+`https://oyacheck-beta.onrender.com/agent-registration.json`.
+Fresh independent fetches returned **HTTP 200**, `application/json`, with no
+redirect, and JSON equal to `public/agent-registration.json`. Every field matches
+the reviewed document: OyaCheck name/description, current favicon, the existing
+web endpoint, `x402Support: false`, active web service, empty registrations and
+empty supported trust. There are no MCP/A2A endpoints, paid-resource claims,
+security guarantees or fabricated identity IDs. This is the same domain as the
+web service, so a separate well-known domain-proof file is optional.
 
-Public constants, `.env.example` and the local Render Blueprint now record the
-confirmed wallet. This does not establish wallet control, an existing identity,
-an event-entry association, or a buy payer. No private key/seed is accepted.
-Existing buy account/payer settings remain separate and unset by this change.
+Owner wallet: `0x9Ceaa6aBFb2bC1aC202f96496Cdc683d86Bc458a`.
+Celo mainnet: **42220**, hex `0xa4ec`.
+Registry: `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`.
+Event tag: `celo_03e76ac742c7`.
 
-## Primary sources
+The saved fresh read-only evidence is `registration/unsigned-preview.json`,
+generated **2026-11-07T15:55:54.070Z** using `https://forno.celo.org`:
 
-- [Live Celo ERC-8004 guide](https://docs.celo.org/build/agents/8004): registry,
-  mint ownership/default receiving wallet, receipt ID and metadata update order.
-- [ERC-8004](https://eips.ethereum.org/EIPS/eip-8004): registration JSON and
-  optional domain proof. Live Celo/spec guidance takes precedence over the older
-  Context7 Celo excerpts retrieved in this session.
-- [Official Celo attribution guide](https://docs.celo.org/build/agents/attribution-tags):
-  issued code and direct-calldata suffix.
-- [MetaMask transaction guidance](https://docs.metamask.io/metamask-connect/evm/guides/send-transactions/)
-  and [Extension hex data setting](https://support.metamask.io/configure/transactions/how-to-add-a-memo-to-a-transaction/).
-- [Loops House](https://www.loops.house/agents-on-open-rails): add the agent wallet
-  to the entry and register its identity from that wallet before the deadline.
-
-## Existing identity audit and its exact scope
-
-The successful read-only primary RPC run used `https://forno.celo.org`, checked
-chain `0xa4ec`, nonempty registry code and finalized block:
-
-- Number: `0x4e5abc9` (82160585).
-- Hash: `0x4dad5fc78c45e3b79456e73c2503b1662131bb2bc06a3f4219f49c533a6cc493`.
-- `balanceOf(0x9Ceaa6aBFb2bC1aC202f96496Cdc683d86Bc458a)` at that block: **0**.
-- Native wallet balance at that block: **0 wei CELO**.
-- The primary audit re-read the numbered block and matched its hash.
-- Captured preview: `registration/unsigned-preview.json`, generated
-  **2026-11-07T14:52:36.636Z**. This is an observation, not a current fee promise.
-
-This is a complete ERC-721 current-ownership count for this exact wallet,
-registry and snapshot: it owns no identity NFTs there. No log pagination is
-needed to establish zero current ownership. It is **not** a complete historical
-registration search or a reverse search for identities owned by someone else
-that name this address in `getAgentWallet`. Do not claim the wallet has never
-registered, or that no related identity can exist anywhere. An owner-supplied
-historical ID/receipt should still be checked before a fresh mint.
-
-An initial independent `https://celo.drpc.org` check also returned chain 42220,
-the same finalized block/hash, nonempty registry code, ownership count zero and
-native balance zero. Later repeat requests failed (HTTP 400 / fetch errors),
-and a later primary refresh also failed. These failures do not produce a negative
-identity result or replace the successful timestamped snapshot. Re-run a reliable
-read-only check immediately before any separately approved registration. The CLI
-fails closed on RPC errors, missing code, wrong chain or changed snapshot hash.
-If the count becomes positive, it reports identities exist without claiming a
-complete enumeration or selecting one blindly.
-
-## Metadata and HTTPS publication gate
-
-The former draft was finalized and moved to `public/agent-registration.json`.
-It advertises only the existing web endpoint, deterministic hostname/advisory
-checks and optional AI/voice English/Pidgin assistance. It states the public beta
-does not open submitted sites or guarantee safety. There are no MCP/A2A endpoints,
-paid-resource claims or trust attestations. `x402Support` is false because
-OyaCheck's endpoints do not accept x402 payments. `active: true` refers to the
-existing beta; `registrations: []` honestly represents the pre-registration state.
-
-The server explicitly serves `/agent-registration.json` as `application/json`.
-Local HTTP tests verify the full JSON and disabled financial routes. The HTTPS
-URI is on the same domain as the advertised web service, so a separate
-`/.well-known/agent-registration.json` domain proof is optional, not a requirement
-for this same-domain arrangement.
-
-**Published readiness: BLOCKED.** The actual HTTPS metadata URL returned HTTP
-**404** during the successful preview. The new route is local only. Production
-still serves commit `638e61fff3256a8dce74b6937dddc9a888559c8c` (Render deployment
-read verified); health returned 200 with sandbox/browser/demo features disabled.
-No successful public metadata publication is claimed.
-
-After separately approved push and deployment, fetch the exact HTTPS URL and
-require successful JSON matching the reviewed local file. `--preview` performs
-this check with redirects rejected; 404, HTML, malformed/drifted JSON or a network
-failure all keep readiness false. Check homepage/favicon availability too.
-Do not register against the unpublished URI simply because the registry accepts
-any string; the registration file must actually resolve.
-
-## Exact unsigned transaction and gas
-
-`registration/unsigned-preview.json` contains the full, unabridged calldata and
-snapshot. `registrationTransaction()` deterministically recreates it:
-
-| Field | Reviewed value |
+| Observation | Result |
 | --- | --- |
-| From / initial NFT owner / default receiving wallet | `0x9Ceaa6aBFb2bC1aC202f96496Cdc683d86Bc458a` |
-| To | `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432` |
-| Chain | Celo mainnet, `42220` / `0xa4ec` |
-| Function | `register(string)`; selector `0xf2c298be` |
-| agentURI argument | `https://oyacheck-beta.onrender.com/agent-registration.json` |
-| Native value | `0x0` (zero CELO transferred to registry) |
-| Attribution | Schema 0, `celo_03e76ac742c7` |
-| Successful read-only gas estimate | **181050 gas** for the exact tagged calldata |
-| Observed gas price | **202500000000 wei/gas** (202.5 gwei) |
-| Indicative execution cost | **36662625000000000 wei = 0.036662625 CELO** |
-| Native balance checked | **0 CELO** |
-| Signing/broadcast authorization | **false** |
+| Finalized block | `0x4e5bbe7`, hash `0xa86f4ea07c02b4d5fb6bd7cd086a26a9f6ee60c33cc722fc8e89075c4dd0ea8b` |
+| Finalized `balanceOf(owner)` | **0 identity NFTs** |
+| Finalized native balance | **0 CELO** |
+| Latest block | `0x4e5c1af`, hash `0x48e7d7da40bda7cfd56b6b36c4fadc6a5284721accb72fe28e966d1c6169c247` |
+| Latest `balanceOf(owner)` | **0 identity NFTs** |
+| Latest native balance | **360000000000000000 wei = 0.36 CELO** |
+| Registry bytecode / chain | Nonempty / verified 42220 |
 
-The estimate was an `eth_estimateGas`, not a send or signature. The tag round-trips
-through the official SDK; ABI decoding retains exactly the intended string.
-Successful estimation also tests the registry's handling of the appended bytes.
-Registration must use this tagged calldata, not an explorer's untagged generic
-Write Contract form. Build with buy purchases have their own exemption; a direct
-registry transaction is tagged.
+The wallet balance changed during this session. Latest-state reads show the
+recent 0.36 CELO; the finalized state still shows zero. The agent did not fund
+or transfer anything. The two states are labeled separately, not conflated.
+There is no currently owned identity in the specified registry at either checked
+snapshot. This ownership count is complete for current ERC-721 ownership; it
+cannot establish absence of historical registrations or identities owned by
+someone else that name this address as their receiving wallet. Any existing
+owner-supplied ID or receipt still deserves verification before a new mint.
 
-The preview omits `feeCurrency`, so this workflow requires native CELO for fees.
-It does not assume USDC/USDT holdings or a supported MetaMask stablecoin fee flow.
-The observed amount is an execution-cost calculation, not a guaranteed maximum;
-refresh the estimate, L1 data fee and fee buffer in MetaMask before approval.
-A human must separately authorize any funding. No funding was done. No fixed
-future funding amount is prescribed from this stale quote. Nonce, gas limit,
-maxFeePerGas and priority fee must be refreshed during the actual human review.
+## Exact simulation and current fee plan
 
-## Human-controlled MetaMask workflow — future authorization only
+Both `eth_call` and `eth_estimateGas` accepted the **final tagged calldata** from
+the supplied wallet for `register(string)` with the exact published agentURI.
+The ABI selector is `0xf2c298be`, zero native value is transferred to the registry,
+and the decoded suffix is Schema 0 with the assigned event code. The full bytes
+and a prepared unsigned EIP-1559 request are in the JSON evidence file. The
+simulated return value is deliberately discarded; it is not a genuine agent ID.
 
-No signing UI, wallet connection, provider send request or signer script was
-added to OyaCheck. The backend CLI is read-only and explicitly rejects signing
-and broadcast RPC methods. MetaMask remains the owner's signer.
+| Fee field | Fresh observation / planning value |
+| --- | --- |
+| Estimated gas | **181050** |
+| RPC gas price | **202.5 gwei** |
+| Indicative execution cost | **0.036662625 CELO** |
+| Gas limit with 20% buffer | **217260**, hex `0x350ac` |
+| Current base fee | **200 gwei** |
+| RPC priority fee | **2.5 gwei** |
+| Prepared max fee | **402.5 gwei**, hex `0x5db6de9900` |
+| Prepared priority fee | hex `0x9502f900` |
+| L1 fee upper-bound oracle result | **0 wei** |
+| Operator fee oracle result | **0 wei** |
+| Buffered reserve | **87447150000000000 wei = 0.08744715 CELO** |
+| Latest balance covers reserve | **yes** |
+| Authorized to sign or broadcast | **false** |
 
-After publication is verified, the ownership check is refreshed, gas is available
-and the owner separately approves registration:
+The planning rule is `ceil(estimatedGas * 1.2)` and
+`max(2 * baseFee + priorityFee, eth_gasPrice)`, plus read-only oracle bounds.
+`GasPriceOracle` at `0x420000000000000000000000000000000000000F` was queried at
+the fee block for `getL1FeeUpperBound(679)` and `getOperatorFee(217260)`.
+The size argument is the 167-byte tagged calldata plus a conservative 512-byte
+allowance for a plain unsigned EIP-1559 envelope without access/authorization
+lists. This is a planning bound, not a signed serialization or an absolute fee
+guarantee. Oracle values and estimates must be refreshed before approval.
+If either oracle or simulation fails, registration readiness stays false.
+No stablecoin fee currency is assumed; this request pays gas in native CELO.
 
-1. Open the owner's existing **MetaMask Extension** and select the exact supplied
-   account and Celo mainnet (42220). Do not create/import a wallet for this task,
-   export secrets, connect an unrelated wallet or upgrade/delegate the account.
-2. Enable the Extension's documented **Settings → Transactions → Show hex data**
-   option if needed. This manual hex-data workflow is documented for Extension;
-   mobile support is not assumed.
-3. Prepare a native CELO send to the registry above, amount **0**, and paste the
-   **entire** `transaction.data` from the freshly regenerated, reviewed JSON into
-   the hex-data field. It is executable ABI calldata, not a human-readable memo.
-   If the installed UI cannot prepare a zero-value contract call with exact
-   data, stop; use a separately reviewed MetaMask provider helper later instead.
-   Do not remove the data or switch to an untagged explorer write operation.
-4. Review the resulting contract interaction, sender, network, destination, zero
-   value, full calldata and current fee details. Registration makes this sender
-   the NFT owner and initial receiving wallet. Any changed URI/wallet/calldata
-   requires a fresh preview and review.
-5. **Confirm in MetaMask signs and normally broadcasts.** There is no separate
-   harmless "sign-only preview" assumed. Do not click Confirm in this preparation
-   session. With explicit transaction approval later, the owner alone confirms.
-   Rejecting/cancelling is safe. A pending request or uncertain result must be
-   inspected in Activity before considering any replacement; do not double-mint.
-6. Retain the public transaction hash. No signature/secret belongs in the repo.
-   A submitted hash or simulated return value is not yet an agent ID.
+The current snapshot meets the implemented read-only prerequisites, using latest
+state, but does not establish funding finality or transaction authorization.
+Refresh after funds finalize if the owner wants finalized-balance assurance.
+Nonce and current fees must still be reviewed by the human at actual signing.
 
-## Receipt verification, genuine ID and metadata update
+## Local MetaMask review workflow
 
-The prepared command below is read-only; replace the argument only with the
-actual future public transaction hash. Do not use test IDs as evidence:
+Start (or use the running instance):
+
+```sh
+npm run registration:review
+```
+
+In this proxy-enabled Node 24 environment use
+`NODE_USE_ENV_PROXY=1 npm run registration:review` so refresh can reach the RPC.
+The local user-facing URL is **http://127.0.0.1:4188/**.
+It binds only to loopback and requires the exact local Host. It is not a route
+on the public beta, and is not deployed by this task.
+
+1. Open that URL in the owner's browser with MetaMask Extension installed.
+   It displays the network, required wallet, registry, decoded function, published
+   metadata URI, zero native value, tag, current balance, estimated/buffered fees
+   and full unsigned request. No account is accessed on page load.
+2. Click **Refresh read-only checks**. This reruns the safe existing RPC/metadata
+   checks and simulations, writes nothing public and clears prior review consent.
+   No wallet interaction occurs. Refresh is limited to once per 30 seconds;
+   previews older than ten minutes cannot request account access.
+3. Select MetaMask discovered through EIP-6963. Review every field and explicitly
+   check the review checkbox. Only then is **Check MetaMask account · no signing**
+   enabled. That button requests account access, not transaction authorization.
+4. The page first reads `eth_chainId` and rejects a wrong network before asking
+   for account permission. The human must select Celo manually; this page does
+   not request network changes. After the user gesture it may call
+   `eth_requestAccounts`, followed by `eth_chainId`/`eth_accounts`. Authorize only
+   the exact supplied account. A different account, multiple accounts, stale
+   preview or changed chain stops the check. Network/account changes clear review.
+5. **Stop.** There is no send/sign/register button or wallet signing method in
+   this page. Real MetaMask access was not requested by the agent. Browser tests
+   used only an explicit fake provider, including fake account permissions.
+   No private key or recovery phrase is requested or exported.
+
+A future registration still needs separate explicit human approval of this exact
+request and fresh fees. The owner can then use MetaMask Extension's documented
+hex-data transaction flow: Celo 42220, exact sender, registry recipient, zero CELO
+value and the complete tagged data. If the installed UI cannot prepare this
+zero-value contract interaction correctly, stop and prepare a separately reviewed
+provider submission workflow. An explorer write form or third-party registration
+site is not part of this workflow. **MetaMask Confirm normally signs and
+broadcasts**; it must not be clicked during the current preparation task.
+
+## Receipt verification and genuine metadata update
+
+After a future approved registration supplies a real public transaction hash:
 
 ```sh
 node scripts/agent-registration.mjs --verify ACTUAL_TRANSACTION_HASH
 ```
 
-It requires Celo mainnet, registry code, successful canonical finalized receipt,
-matching sender/destination/zero value/tagged input, exactly one genuine registry
-`Registered` event and matching ERC-721 mint `Transfer`. It obtains the ID from
-the event, never the estimate's return value. It reads `ownerOf(id)`, `tokenURI(id)`
-and `getAgentWallet(id)` at a finalized snapshot and requires the supplied wallet
-and exact URI. Failed/pending/reorged/mismatched receipts stop verification.
+The existing read-only verifier checks chain, registry code, receipt success,
+canonical finalized block, exact sender/recipient/value/tagged input, the genuine
+registry `Registered` event and matching mint `Transfer`. It obtains the actual
+ID from that event, then verifies `ownerOf(id)`, `tokenURI(id)` and
+`getAgentWallet(id)` against the supplied wallet and exact URI. Pending, failed,
+reorged or mismatched evidence fails closed. No receipt/agent ID is invented here.
 
-The command emits evidence plus **proposedMetadata**, containing the actual ID
-and `agentRegistry: eip155:42220:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`.
-It writes no public file. Review that object, then separately authorize updating
-`public/agent-registration.json` and publishing it at the same HTTPS URL. Do not
-publish the CLI's entire output wrapper as the registration document. Refetch
-public JSON and confirm the registration tuple matches chain reads. The stable
-HTTPS agentURI stays unchanged, so no `setAgentURI` transaction is needed for
-this update. An immutable URI would require a separate URI-change transaction.
+The CLI emits receipt evidence and `proposedMetadata`, with the actual ID and
+`agentRegistry: eip155:42220:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`.
+It does not update any file or publish. Review only the proposed metadata object,
+then separately authorize updating/publishing `public/agent-registration.json`.
+Refetch the public JSON and compare the tuple to chain reads. Keeping this stable
+HTTPS URI means no `setAgentURI` transaction is needed for the JSON update.
 
-Finally, the owner opens their actual Loops House entry, checks that the exact
-wallet is associated with it and uses the organizer's current identity
-verification flow with the genuine chain/registry/ID. Confirm the entry reflects
-the verified identity and retain submission-safe public links/evidence. The entry
-URL and authenticated verification state are still unknown; no undocumented
-Loops API, specific button name, automatic eligibility or successful submission
-is assumed. Identity alone does not meet mainnet paid-call/independent-user criteria.
+Finally the owner checks their actual Loops House entry: the exact agent wallet
+must be associated with the entry, and its genuine mainnet registry/ID must pass
+the organizer's current identity checks. Entry URL and authenticated verification
+status remain unknown. Do not invent Loops API endpoints, button names or a
+successful verification/submission. Identity does not replace the other track
+requirements. No final hackathon submission is authorized here.
 
-## Read-only release and recovery
+## Financial protections and verification
 
-Financial/demo flags remain off, `OYACHECK_READ_ONLY=1`, auto deploy off, and no
-purchase DB/account/payer is added. The public wallet in the Blueprint is not a
-signing credential. The production/Render ledger and execution guards remain.
-The existing free Render filesystem remains unsuitable for financial SQLite.
+Fresh public checks returned health **200** with mainnet preparation, sandbox
+purchases and demo disabled; their probed routes returned **403**. No financial
+configuration changed. The free Render spending-store restriction and guards
+remain. No push, deployment, restart, signing, spending or registration occurred.
 
-Publishing this candidate needs explicit push/deployment authorization. Keep
-the existing live commit recorded above as rollback target, keep financial flags
-off, and verify actual Dashboard settings and public disabled routes after any
-future deployment/rollback. See `IDENTITY-AND-RELEASE-RC.md` for the full recovery
-constraints. No deployment, rollback, publication or external mutation happened.
+`npm run check`, release preflight and `git diff --check` passed.
+Full suite: **254 total, 251 passed, 3 skipped, 0 failed**.
+Focused tests: **14 passed, 0 failed**, across registration and review modules: exact
+calldata/tag, failed RPC and simulations, ownership scope, fees/oracle bounds,
+receipt/identity checks, proposed actual-ID metadata, review-before-permission,
+wrong wallet/network and loopback HTTP guards. Real Chromium with a mock
+MetaMask provider verified zero automatic wallet requests, the explicit review
+gate, only the four allowed account/chain methods, invalidation on network change,
+and fitting widths 320/360/390/412/768. No real wallet authorization was tested.
 
-## Local commands and verification
+Primary sources checked:
+- [Celo registration](https://docs.celo.org/build/agents/8004)
+- [Celo attribution](https://docs.celo.org/build/agents/attribution-tags)
+- [MetaMask provider API](https://docs.metamask.io/metamask-connect/evm/reference/provider-api/)
+- [MetaMask account guidance](https://github.com/MetaMask/metamask-docs/blob/main/metamask-connect/evm/guides/manage-user-accounts.md)
+- [MetaMask hex-data setting](https://support.metamask.io/configure/transactions/how-to-add-a-memo-to-a-transaction/)
+- [Celo GasPriceOracle source](https://github.com/celo-org/optimism/blob/celo-rebase-19/packages/contracts-bedrock/src/L2/GasPriceOracle.sol)
+- [Loops House](https://www.loops.house/agents-on-open-rails)
 
-```sh
-npm run check
-npm test
-node test-explain.mjs
-NODE_ENV=production OYACHECK_READ_ONLY=1 npm run release:check
-node scripts/agent-registration.mjs --audit
-npm run registration:preview
-```
-
-In this proxy-enabled environment, read-only network commands used Node 24 with
-`NODE_USE_ENV_PROXY=1`. Standard direct-network environments need no proxy flag.
-Node 22 operators should configure their network/proxy support appropriately;
-the RPC or publication check failing never means permission to proceed.
-
-Verification: **249 total, 246 passed, 3 skipped, 0 failed**. The nine new tests
-cover tagged calldata, current-ownership scope and failed queries, denied signing
-methods, published metadata gating, receipt/event/owner verification and proposed
-actual-ID metadata. Stable HTTP route and disabled financial routes passed.
-Syntax checks and the five `--no-ai` CLI examples passed. Release preflight passed
-with the supplied public wallet and financial flags off. No live AI/provider,
-wallet signing or financial tests were run. Default-suite skips are the existing
-opt-in local Chromium tests; no browser behavior changed in this task.
-
-**Single next owner action:** authorize pushing and deploying the reviewed local
-release commit to publish `/agent-registration.json` with every financial flag
-off. This task's explicit no-push/no-deploy instruction requires that separate
-authorization. After publication, read-only HTTPS verification and refreshed
-preview come before any separate funding or MetaMask registration approval.
+**Next human action:** open the local review page, refresh and review the exact
+request with the intended MetaMask account. Separate registration/signing approval
+is still required before any transaction authorization request or spending.
