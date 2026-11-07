@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 const html = await readFile(new URL('../public/index.html', import.meta.url),'utf8');
 const js = await readFile(new URL('../public/app.js', import.meta.url),'utf8');
-const css = await readFile(new URL('../public/styles.css', import.meta.url),'utf8');
+const css = await readFile(new URL('../public/product.css', import.meta.url),'utf8');
 
 test('payment approval uses an accessible native dialog',()=>{
   assert.match(html,/<dialog id="buy-confirm-dialog"[^>]+aria-labelledby="buy-dialog-title"[^>]+aria-describedby="buy-dialog-description"/);
@@ -35,7 +35,7 @@ test('quote is verified as testnet USDC and capped before display',()=>{
 });
 test('dialog is styled on desktop and mobile, and successful source inspection scope is accurate',()=>{
   assert.match(css, /\.payment-dialog::backdrop/);
-  assert.match(css, /@media\(max-width:510px\)[^{]*\{\.payment-dialog/);
+  assert.match(css, /width:min\(470px,calc\(100vw - 30px\)\)/);
   assert.match(js, /scopeText\.textContent='The trusted NCC advisory was opened/);
-  assert.match(html, /No suspicious link opened/);
+  assert.match(html, /we don’t visit the submitted site/i);
 });

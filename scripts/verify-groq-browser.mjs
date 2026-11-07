@@ -25,11 +25,12 @@ export async function verifyGroqBrowser(page, origin = 'http://127.0.0.1:4173') 
     ]) {
       // Each fresh conversation must use /api/ask, with no scan or follow-up.
       await page.reload();
-      await page.locator('#read-aloud').uncheck();
-      await page.locator(`[data-lang="${language}"]`).click();
-      await page.locator('#message-input').fill(question);
+      await page.evaluate(()=>document.querySelector('#read-aloud').checked=false);
+      await page.locator('#question-panel > summary').click();
+      await page.locator('#question-language').selectOption(language);
+      await page.locator('#question-input').fill(question);
       const pending = page.waitForResponse(r => new URL(r.url()).pathname === '/api/ask', { timeout: 20_000 });
-      await page.locator('#message-input').press('Enter');
+      await page.locator('#question-submit').click();
       const response = await pending;
       assert.equal(response.status(), 200);
       const body = await response.json();
@@ -40,7 +41,7 @@ export async function verifyGroqBrowser(page, origin = 'http://127.0.0.1:4173') 
       const rendered = page.locator('.chat-message.assistant').last();
       await rendered.locator('.message-meta').filter({ hasText: 'LIVE AI · GROQ' }).waitFor({ timeout: 5000 });
       assert.equal(await rendered.locator('p').innerText(), body.answer.text);
-      assert.equal(await page.locator('html').getAttribute('lang'), language);
+      assert.equal(await rendered.getAttribute('lang'), language);
       responses.push({ language, method: body.answer.method, characters: body.answer.text.length, rendered: true });
     }
     assert.equal(calls, 2);

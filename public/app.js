@@ -95,6 +95,7 @@ function setBusy(busy) {
   for(const button of document.querySelectorAll('[data-check-mode], .lang-button'))button.disabled=busy;
   form.setAttribute('aria-busy',String(busy));
   $('#new-chat').disabled=busy;
+  $('#question-submit').disabled=busy;$('#question-input').disabled=busy;$('#explain-result').disabled=busy;
 }
 function removeWelcome() {
   const welcome = chat.querySelector('.empty-welcome');
@@ -137,9 +138,15 @@ function quickActions(area) {
   const questions = language === 'pcm' ? ['Wetin I go do next?', 'Which checks una never do?'] : ['What should I do next?', 'What checks were not performed?'];
   for (const q of questions) {
     const btn = document.createElement('button');btn.type='button';btn.textContent=q;
-    btn.addEventListener('click',()=>send(q,'ask'));
+    btn.addEventListener('click',()=>askQuestion(q));
     area.append(btn);
   }
+}
+// Friendly summaries never replace the complete deterministic evidence below.
+function displayReason(reason,lang){
+  const en={userinfo:'The name before “@” is not the destination. Check the domain shown above.',unicode:'This address uses an internationalized domain name. Look carefully for letters that imitate another name.',embedded:'A familiar-looking domain is part of a longer address. That does not establish who owns the destination.',confusable:'Letters and numbers make this address resemble a familiar service.',http:'This link uses HTTP instead of HTTPS.',port:'This address uses an unusual port.',redirect:'The link includes a possible redirect. We have not followed it.',shortener:'This is a shortened link. Its final destination is unknown to this check.',credential:'The message mentions private information, such as passwords or OTPs. Treat unexpected requests with caution.',urgency:'The wording puts pressure on you to act quickly.',bad:'This exact domain is listed in the NCC phishing advisory below.',lookalike:'This resembles the NCC device service, but is not one of its documented official hostnames.','reported-parent':'This is below a domain named in the NCC advisory. The exact subdomain is not listed.'};
+  const pcm={userinfo:'The name before “@” no be the destination. Check the domain we show above.',unicode:'This address use internationalized domain name. Check letters wey resemble another name well.',embedded:'Familiar domain name dey inside longer address. That one no prove who own the destination.',confusable:'Letters and numbers make this address resemble familiar service.',http:'This link use HTTP, no be HTTPS.',port:'This address use unusual port.',redirect:'This link get possible redirect. We never follow am.',shortener:'Na shortened link. We never know where e go land.',credential:'The message mention private details like password or OTP. Take care with unexpected requests.',urgency:'The wording dey put pressure on you to act quick.',bad:'This exact domain dey inside the NCC phishing advisory below.',lookalike:'This resemble NCC device service, but no be one of the official domains wey dem document.','reported-parent':'This dey under domain wey NCC name for advisory. This exact subdomain no dey listed.'};
+  return (lang==='pcm'?pcm:en)[reason.code]||reason.text;
 }
 function updateEvidence(data) {
   if (buyConfirmDialog.open) buyConfirmDialog.close('cancel');
@@ -160,12 +167,26 @@ function updateEvidence(data) {
   evidenceIndicator.textContent = data.status === 'known-phishing' ? 'PUBLISHED MATCH' : data.status === 'official-host-match' ? 'HOSTNAME MATCH' : data.status === 'suspicious' ? 'CAUTION' : data.status === 'invalid' ? 'INVALID' : 'UNVERIFIED';
   findingTitle.textContent = data.label || 'No finding';
   findingIcon.textContent = data.status === 'official-host-match' ? 'i' : data.status === 'known-phishing' || data.status === 'suspicious' ? '!' : '?';
+  $('#finding-host-label').textContent=data.host?'Domain examined':'Message check';
   findingHost.textContent = data.host || (data.analysisKind==='message' ? 'Message only · no hostname' : 'No valid public hostname');
   $('#finding-time').textContent=data.checkedAt ? new Date(data.checkedAt).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}) : 'Not recorded';
   $('#finding-time').dateTime=data.checkedAt || '';
   $('#coverage-note').textContent=data.analysisKind==='message'&&!data.host ? 'Message patterns only. Sender, claims and attachments remain unverified.' : data.evidence.length ? 'Source match from the manually curated NCC advisory list. This does not verify the live page.' : 'No published threat match in our small NCC list. URL/message patterns are not a comprehensive threat or reputation check.';
   findingReasons.replaceChildren();
-  for (const r of data.reasons || []) {const li=document.createElement('li');li.textContent = r.text;findingReasons.append(li);}
+  const primary=(data.reasons||[]).filter(r=>!['unknown','message-only','official'].includes(r.code));
+  for(const r of primary){const li=document.createElement('li');li.textContent=displayReason(r,data.language);li.dataset.code=r.code;findingReasons.append(li);}
+  $('.result-reasons').hidden=primary.length===0;
+  $('#technical-reasons').replaceChildren();
+  for(const r of data.reasons||[]){const li=document.createElement('li');li.textContent=r.text;li.dataset.code=r.code;$('#technical-reasons').append(li);}
+  const pcm=data.language==='pcm';
+  $('#result-summary').textContent= data.status==='unverified' ? (data.host ? (pcm?'We no see configured warning signs, but e no mean say this link safe.':'No configured warning signs were found. This does not establish that the link is safe.') : (pcm?'We no see obvious warning signs. We never verify sender or story.':'No obvious wording warning signs were found. The sender and claims remain unverified.')) : data.status==='invalid' ? (pcm?'We no fit complete this check. Review the address and try again.':'We could not complete this check. Review the address and try again.') : (data.host ? (pcm?'Na address and text patterns we check, no be the live website.':'These findings concern the address and text, not the live website.') : (pcm?'Na wording patterns only. We never verify sender or story.':'These are wording patterns only. The sender and story have not been verified.'));
+  $('#next-step-text').textContent=data.status==='known-phishing' ? (pcm?'No enter private details or pay through this link. Contact the organisation through channel wey you already know.':'Do not enter private details or pay through this link. Contact the organisation through a channel you already know.') : data.status==='invalid' ? (pcm?'Paste one public HTTP(S) address, or choose Forwarded message to check text.':'Paste one public HTTP(S) address, or choose Forwarded message to examine text.') : (pcm?'If dem ask for login, payment or private details, pause. Confirm directly through channel wey you already trust.':'If you are being asked to log in, pay or share private details, pause. Confirm the request through a channel you already trust.');
+  $('#result-explanation').textContent=data.explanation?.text || '';
+  $('#result-method').textContent=data.explanation?.method==='groq'?'Optional AI explanation':'Prepared guidance · not AI';
+  $('#result-audio-status').textContent='';
+  for(const id of ['finding-title','finding-reasons','technical-reasons','result-explanation','result-summary','next-step-text'])document.getElementById(id).lang=data.language==='pcm'?'pcm':'en';
+  $('#input-summary').textContent=data.host || (data.analysisKind==='message'?'Forwarded message':'Address needs review');
+  $('#input-panel').open=false;$('#back-to-result').hidden=false;$('#question-label').textContent='Questions about this result?';
   findingSources.replaceChildren();
   for (const source of data.evidence || []) {
     if (!source?.url?.startsWith('https://csirt.ncc.gov.ng/')) continue;
@@ -187,13 +208,14 @@ function trackConversation(role,text) {
   conversation = conversation.slice(-4);
 }
 async function send(raw, force = 'auto') {
+  if(force==='ask')return askQuestion(raw);
   const text=String(raw||'').trim();
   if (!text || isBusy) return;
   if (recordState) {voiceMessage('Stop your recording before sending.');return;}
-  if(force==='ask')selectCheckMode('ask');
   if(force==='scan')selectCheckMode(/\s/.test(text)?'message':'url');
-  const scan = force === 'scan' || (force !== 'ask' && checkMode!=='ask');
+  const scan = force!=='question';
   const requestedMode=checkMode;
+  const questionLanguage=$('#question-language').value==='pcm'?'pcm':'en';
   if (!scan && text.length > 450) {
     message('assistant',language === 'pcm' ? 'Abeg make your question short, no pass 450 characters.' : 'Please make your question shorter than 450 characters.','local-guard'); return;
   }
@@ -202,15 +224,18 @@ async function send(raw, force = 'auto') {
   }
   stopSpeech();
   $('#request-error').hidden=true;$('#retry-check').hidden=true;
-  input.value=text;setBusy(true);
+  if(scan)input.value=text;else $('#question-panel').open=true;
+  setBusy(true);
+  $('#question-error').hidden=true;$('#scan-progress').hidden=!scan;
   if(scan){
+    $('#input-panel').open=true;chat.replaceChildren();
     report=null;lastScanInput=null;pendingQuote=null;quoteExpiresAt=0;inspectSource.hidden=true;browserInvestigation.hidden=true;mainnetQuote.disabled=true;
     evidenceResult.hidden=true;evidenceEmpty.hidden=false;evidenceIndicator.textContent='CHECKING';
     evidenceEmpty.querySelector('h3').textContent='Examining the available signs…';
     evidenceEmpty.querySelector('p').textContent='Checking the text and address only. No submitted website is being visited.';
   }
-  message('user',text);
-  const loading=message('assistant',scan ? (language==='pcm'?'I dey compare the link with evidence we get…':'Comparing this link with available evidence…') : (language==='pcm'?'I dey think about your question…':'Thinking about your question…'),'status');
+  if(!scan)message('user',text);
+  const loading=scan ? document.createElement('span') : message('assistant',scan ? (language==='pcm'?'I dey compare the link with evidence we get…':'Comparing this link with available evidence…') : (language==='pcm'?'I dey think about your question…':'Thinking about your question…'),'status');
   loading.classList.add('is-thinking');
   try {
     if (scan) {
@@ -220,22 +245,22 @@ async function send(raw, force = 'auto') {
       lastScanInput=text;lastScanMode=requestedMode;
       conversation=[];
       const reply = data.explanation?.text || (language === 'pcm' ? 'We no get explanation for this check yet.' : 'An explanation is not available for this check.');
-      message('assistant',`${data.label}. ${reply}`,data.explanation?.method || 'prepared-text',quickActions);
-      if(data.explanation?.method !== 'groq') voiceMessage($('#ai-explanation').checked?'Live AI was unavailable; prepared guidance is shown. The findings are unchanged.':'Prepared English/Pidgin guidance. AI explanations are optional; no website was visited.');
+      if($('#ai-explanation').checked && data.explanation?.method!=='groq')$('#result-method').textContent='AI unavailable · prepared guidance';
+      if(readAloud.checked)readAnswer(reply);
     } else {
-      const response=demoActive ? await jsonPost('/api/demo/ask',{question:text,language,history:conversation}) : report && lastScanInput ? await jsonPost('/api/chat',{question:text,input:lastScanInput,mode:lastScanMode,language,history:conversation}) : await jsonPost('/api/ask',{question:text,language,history:conversation});
+      const response=demoActive ? await jsonPost('/api/demo/ask',{question:text,language:questionLanguage,history:conversation}) : report && lastScanInput ? await jsonPost('/api/chat',{question:text,input:lastScanInput,mode:lastScanMode,language:questionLanguage,history:conversation}) : await jsonPost('/api/ask',{question:text,language:questionLanguage,history:conversation});
       loading.remove();
-      message('assistant',response.answer?.text || 'No answer available.',response.answer?.method || 'prepared-text');
+      const answerRow=message('assistant',response.answer?.text || 'No answer available.',response.answer?.method || 'prepared-text');answerRow.lang=questionLanguage;
       if(response.answer?.method === 'prepared-text') voiceMessage('AI could not answer this turn; prepared guidance is shown. You can keep using the checker.');
       trackConversation('user',text);
       if(response.answer?.method==='groq' || response.answer?.method==='prepared-text') trackConversation('assistant',response.answer.text);
     }
-  }catch(e){loading.remove();const errorText=e.name==='TimeoutError'?'The request timed out. Your input is still here; try again when you’re ready.':e.message;$('#request-error').textContent=errorText;$('#request-error').hidden=false;$('#retry-check').hidden=false;message('assistant',errorText,'error');if(scan){evidenceIndicator.textContent='INCOMPLETE';evidenceEmpty.querySelector('h3').textContent='This check could not finish.';evidenceEmpty.querySelector('p').textContent='Your input is still in the form. Retry when you’re ready; no result was produced for this request.';}}
-  finally{setBusy(false);if(scan && report && lastScanInput===text && $('#request-error').hidden){findingTitle.focus({preventScroll:true});if(innerWidth<900)evidenceResult.scrollIntoView({block:'start',behavior:'instant'});}else input.focus();}
+  }catch(e){loading.remove();const errorText=e.name==='TimeoutError'?'The request timed out. Your input is still here; try again when you’re ready.':e.message;const errorBox=scan?$('#request-error'):$('#question-error');errorBox.textContent=errorText;errorBox.hidden=false;if(scan){$('#retry-check').hidden=false;evidenceIndicator.textContent='INCOMPLETE';evidenceEmpty.querySelector('h3').textContent='This check could not finish.';evidenceEmpty.querySelector('p').textContent='Your input is still in the form. Retry when you’re ready; no result was produced for this request.';}}
+  finally{setBusy(false);$('#scan-progress').hidden=true;if(scan && report && lastScanInput===text && $('#request-error').hidden){findingTitle.focus({preventScroll:true});evidenceResult.scrollIntoView({block:'start',behavior:'instant'});}else if(scan)input.focus();}
 }
 function selectCheckMode(mode) {
-  checkMode=['url','message','ask'].includes(mode)?mode:'url';
-  const copy={url:['Website address','Paste one public URL or domain…','One public HTTP(S) address. No submitted site will be opened.'],message:['Forwarded message','Paste the message you received…','Messages with or without a link. Remove private details. Multiple links must be checked separately.'],ask:['Safety question','Ask about the findings or online safety…','Optional conversation. Questions may be sent to Groq when configured; never include secrets.']}[checkMode];
+  checkMode=['url','message'].includes(mode)?mode:'url';
+  const copy={url:['Paste the link','Paste a website address here…','One public HTTP(S) address. We won’t open it.'],message:['Forwarded message','Paste the message you received…','Messages with or without a link. Remove private details. Multiple links must be checked separately.'],ask:['Safety question','Ask about the findings or online safety…','Optional conversation. Questions may be sent to Groq when configured; never include secrets.']}[checkMode];
   $('#input-label').textContent=copy[0];input.placeholder=copy[1];$('#input-guidance').textContent=copy[2];
   for(const b of document.querySelectorAll('[data-check-mode]'))b.setAttribute('aria-pressed',String(b.dataset.checkMode===checkMode));
   setBusy(isBusy);
@@ -246,7 +271,7 @@ function showView(focus=false) {
   if(!app){stopSpeech();voiceEpoch++;if(recordState){discardRecording=true;try{if(recorder?.state==='recording')recorder.stop();}catch{}cleanupAudio();}}
   for(const a of document.querySelectorAll('.nav-app')){if(app)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}
   document.title=app?'OyaCheck — Link and message checker':'OyaCheck — Check a link before you trust it';
-  if(focus){if(app){input.focus({preventScroll:true});input.scrollIntoView({block:'center',behavior:'instant'});}else if(location.hash){const target=document.getElementById(location.hash.slice(1));if(target){target.setAttribute('tabindex','-1');target.focus({preventScroll:true});target.scrollIntoView();}}else {scrollTo(0,0);$('#intro-title').setAttribute('tabindex','-1');$('#intro-title').focus({preventScroll:true});}}
+  if(focus){if(app){$('#input-panel').open=true;input.focus({preventScroll:true});input.scrollIntoView({block:'center',behavior:'instant'});}else if(location.hash){const target=document.getElementById(location.hash.slice(1));if(target){target.setAttribute('tabindex','-1');target.focus({preventScroll:true});target.scrollIntoView();}}else {scrollTo(0,0);$('#intro-title').setAttribute('tabindex','-1');$('#intro-title').focus({preventScroll:true});}}
 }
 function navigate(path) {if(path!==location.pathname+location.hash)history.pushState(null,'',path);showView(true);}
 document.addEventListener('click',event=>{
@@ -260,17 +285,49 @@ for(const button of document.querySelectorAll('[data-landing-mode]'))button.addE
   landingMode=button.dataset.landingMode;
   for(const b of document.querySelectorAll('[data-landing-mode]'))b.setAttribute('aria-pressed',String(b.dataset.landingMode===landingMode));
   $('#landing-label').textContent=landingMode==='url'?'Website address':'Forwarded message';
-  $('#landing-input').placeholder=landingMode==='url'?'https://example.com':'Paste the message you received…';
+  $('#landing-input').placeholder=landingMode==='url'?'Paste a website address here…':'Paste the message you received…';
   $('#landing-guidance').textContent=landingMode==='url'?'Paste one public URL or domain. We won’t open it.':'Messages with or without a link. Remove private details.';
   document.querySelector('.landing-submit').textContent=landingMode==='url'?'Check this link →':'Check this message →';
 });
 $('#landing-form').addEventListener('submit',event=>{event.preventDefault();if(isBusy)return;const value=$('#landing-input').value;selectCheckMode(landingMode);input.value=value;navigate('/app');send(value);});
 $('#retry-check').addEventListener('click',()=>send(input.value));
-$('#new-check').addEventListener('click',()=>{$('#new-chat').click();input.focus();input.scrollIntoView({block:'center',behavior:'instant'});});
+$('#new-check').addEventListener('click',()=>{$('#new-chat').click();$('#input-panel').open=true;input.focus();input.scrollIntoView({block:'center',behavior:'instant'});});
 showView();
+async function askQuestion(value){
+  const text=String(value||'').trim();if(!text||isBusy)return;
+  $('#question-panel').open=true;$('#question-input').value=text;
+  await send(text,'question');
+  if($('#question-error').hidden)$('#question-input').value='';
+  $('#question-input').focus();
+}
+$('#question-form').addEventListener('submit',event=>{event.preventDefault();askQuestion($('#question-input').value);});
+$('#listen-result').addEventListener('click',()=>readAnswer($('#result-explanation').textContent));
+$('#back-to-result').addEventListener('click',()=>{$('#input-panel').open=false;findingTitle.focus();});
+async function refreshExplanation(){
+  if(!report||!lastScanInput||isBusy||recordState)return;
+  const previous=report,draft=input.value,editing=$('#input-panel').open;
+  setBusy(true);stopSpeech();$('#result-method').textContent='Updating explanation…';
+  try{
+    const data=await jsonPost('/api/analyze',{input:lastScanInput,mode:lastScanMode,language,explain:$('#ai-explanation').checked});
+    updateEvidence(data);
+    if($('#ai-explanation').checked&&data.explanation?.method!=='groq')$('#result-method').textContent='AI unavailable · prepared guidance';
+    if(readAloud.checked)readAnswer(data.explanation?.text||'');
+  }catch{
+    language=previous.language==='pcm'?'pcm':'en';
+    for(const b of document.querySelectorAll('.lang-button')){const selected=b.dataset.lang===language;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected));}
+    $('#result-method').textContent='Explanation update unavailable. Existing findings are unchanged.';
+  }finally{input.value=draft;$('#input-panel').open=editing;$('#plain-language').open=true;setBusy(false);}
+}
+$('#explain-result').addEventListener('click',refreshExplanation);
+$('#preview-example').addEventListener('click',async()=>{
+  const button=$('#preview-example');button.disabled=true;$('#preview-status').textContent='Running the real URL check…';
+  try{const data=await jsonPost('/api/analyze',{input:'https://example.org@unrelated.example/account',mode:'url',language:'en',explain:false});
+    $('#preview-verdict').textContent=data.label;$('#preview-host').textContent=data.host||'No hostname';$('#preview-note').textContent=data.reasons.find(r=>r.code==='userinfo')?.text||data.scope;$('#preview-result').hidden=false;$('#preview-intro').hidden=true;$('#preview-status').textContent='Generated by the real checker. No submitted website was opened.';button.textContent='Run the example again →';
+  }catch{$('#preview-status').textContent='The example check could not finish. Try again when you’re ready.';}finally{button.disabled=false;}
+});
 form.addEventListener('submit',event=>{event.preventDefault();send(input.value);});
 input.addEventListener('keydown',event=>{
-  if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();form.requestSubmit();}
+  if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing&&(checkMode==='url'||event.ctrlKey||event.metaKey)){event.preventDefault();form.requestSubmit();}
 });
 suggestions.addEventListener('click',event=>{
   const chip=event.target.closest('button[data-example]');if(!chip)return;
@@ -279,11 +336,11 @@ suggestions.addEventListener('click',event=>{
 for(const button of document.querySelectorAll('.lang-button')){
   button.addEventListener('click',()=>{
     language=button.dataset.lang === 'pcm'?'pcm':'en';
-    document.documentElement.lang=language==='pcm'?'pcm':'en';
+    // The page chrome stays English; result text carries its own language.
     for(const b of document.querySelectorAll('.lang-button')){const selected=b.dataset.lang===language;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected));}
     selectCheckMode(checkMode);
     // Re-translate a completed deterministic check only on this explicit choice.
-    if(report && lastScanInput && !isBusy && !recordState){const value=input.value;const mode=checkMode;checkMode=lastScanMode;send(lastScanInput).finally(()=>{checkMode=mode;input.value=value;selectCheckMode(mode);});}
+    if(report && lastScanInput && !isBusy && !recordState)refreshExplanation();
     stopSpeech();
   });
 }
@@ -299,7 +356,8 @@ $('#new-chat').addEventListener('click',()=>{
   const desc=document.createElement('p');desc.textContent='Paste a link, share a forwarded message, or ask about online safety.';
   welcome.append(icon,kicker,title,desc);chat.append(welcome);
   if (buyConfirmDialog.open) buyConfirmDialog.close('cancel');
-  $('#request-error').hidden=true;$('#retry-check').hidden=true;
+  selectCheckMode('url');$('#plain-language').open=false;
+  $('#request-error').hidden=true;$('#retry-check').hidden=true;$('#input-panel').open=true;$('#back-to-result').hidden=true;$('#technical-details').open=false;$('#explanation-options').open=false;$('#question-panel').open=false;$('#ai-explanation').checked=false;$('#question-input').value='';$('#question-label').textContent='Have a safety question?';
   mainnetQuote.disabled=true;report=null;lastScanInput=null;demoActive=false;conversation=[];pendingQuote=null;quoteExpiresAt=0;browserInvestigation.hidden=true;input.value='';evidenceResult.hidden=true;evidenceEmpty.hidden=false;evidenceIndicator.textContent='NO CHECK YET';evidenceEmpty.querySelector('h3').textContent='Your next check starts here.';evidenceEmpty.querySelector('p').textContent='Paste a link or forwarded message. Findings and limits will appear here.';input.focus();
 });
 copyReportButton.addEventListener('click',async()=>{
@@ -428,7 +486,7 @@ fetch('/api/health').then(r=>r.json()).then(health=>{
 
 // Voice is opt-in; microphone amplitude is analysed locally to find pauses.
 // Transcribed URLs/private information still require human review before sending.
-function voiceMessage(value) { voiceStatus.textContent=value; }
+function voiceMessage(value) { voiceStatus.textContent=value;if(report)$('#result-audio-status').textContent=value; }
 function stopSpeech() {
   if ('speechSynthesis' in window) window.speechSynthesis.cancel();
   currentUtterance=null;

@@ -35,10 +35,11 @@ export async function verifyBuyBrowser(page, origin = 'http://127.0.0.1:4173') {
   try {
     await page.goto(base.origin+'/app');
     await page.setViewportSize({ width: 320, height: 850 });
-    await page.locator('#read-aloud').uncheck();
+    await page.evaluate(()=>document.querySelector('#read-aloud').checked=false);
     await page.locator('#message-input').fill('secure-verifymydevice.ng');
     await page.locator('#message-input').press('Enter');
     await page.locator('#evidence-result[data-status="known-phishing"]').waitFor();
+    await page.locator('#technical-details').evaluate(e=>e.open=true);
     const finding = await page.locator('#finding-title').innerText();
     const quote = async () => {
       await page.locator('#quote-source').click();
@@ -61,7 +62,7 @@ export async function verifyBuyBrowser(page, origin = 'http://127.0.0.1:4173') {
     quoteMode = 'valid'; await quote();
     await page.locator('#inspect-source').click();
     await page.locator('#buy-dialog-approve').click(); // Intercepted; never reaches server.
-    await page.getByText('PAID SOURCE CHECK · CELO SEPOLIA', { exact: true }).waitFor();
+    await page.locator('#browser-output').waitFor({state:'visible'});
     check(inspections === 1, 'Mock success did not use exactly one request');
     check(await page.locator('#finding-title').innerText() === finding, 'Paid output changed deterministic finding');
     check(await page.locator('#browser-output a').getAttribute('href') === `https://celo-sepolia.blockscout.com/tx/${transaction}`, 'Receipt explorer link incorrect');

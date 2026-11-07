@@ -86,11 +86,13 @@ test('voice policy module is served with security headers and no secrets',async(
   assert.match(r.headers.get('content-type'),/javascript/);
   assert.match(await r.text(),/voiceDecision/);
 });
-test('voice-first toggles are enabled by default',async()=>{
+test('voice automation remains optional and off by default',async()=>{
   const r=await fetch(origin+'/');
   const html=await r.text();
-  assert.match(html,/id="auto-voice" type="checkbox" checked/);
-  assert.match(html,/id="read-aloud" type="checkbox" checked/);
+  assert.match(html,/id="auto-voice" type="checkbox"/);
+  assert.doesNotMatch(html,/id="auto-voice" type="checkbox" checked/);
+  assert.match(html,/id="read-aloud" type="checkbox"/);
+  assert.doesNotMatch(html,/id="read-aloud" type="checkbox" checked/);
 });
 
 test('explicit message analysis supports harmless no-link text and timestamps without AI',async()=>{
@@ -106,4 +108,22 @@ test('explicit URL analysis rejects message text and unsupported modes',async()=
 test('direct app route and product styles retain security headers',async()=>{
   const r=await fetch(origin+'/app');assert.equal(r.status,200);assert.match(r.headers.get('content-security-policy'),/connect-src 'self'/);const html=await r.text();assert.match(html,/id="app-view"/);assert.match(html,/id="landing-form" action="\/app" method="post"/);assert.doesNotMatch(html,/id="landing-input" name=/);
   const css=await fetch(origin+'/product.css');assert.equal(css.status,200);assert.match(css.headers.get('content-type'),/text\/css/);
+});
+
+test('checker puts two input modes first and discloses supporting tools',async()=>{
+  const html=await(await fetch(origin+'/app')).text();
+  assert.equal([...html.matchAll(/data-check-mode=/g)].length,2);
+  for(const id of ['voice-options','plain-language','technical-details','question-panel']){
+    assert.match(html,new RegExp('<details id="'+id+'"'));
+    assert.doesNotMatch(html,new RegExp('<details id="'+id+'"[^>]*\\sopen(?:\\s|>)'));
+  }
+  assert.match(html,/id="landing-input"[^>]+placeholder="Paste a website address here/);
+  assert.doesNotMatch(html,/id="landing-input"[^>]+placeholder="https?:/);
+});
+test('licensed self-hosted fonts are explicitly served with the existing CSP',async()=>{
+  for(const path of ['/fonts/lato-regular.ttf','/fonts/lato-bold.ttf']){
+    const r=await fetch(origin+path);assert.equal(r.status,200);assert.equal(r.headers.get('content-type'),'font/ttf');assert.match(r.headers.get('content-security-policy'),/font-src 'self'/);
+    const bytes=Buffer.from(await r.arrayBuffer());assert.equal(bytes.readUInt32BE(0),0x00010000);
+  }
+  assert.equal((await fetch(origin+'/fonts/../server.mjs')).status,404);
 });
