@@ -116,6 +116,8 @@ test('stable public metadata route is JSON and does not enable financial endpoin
   assert.equal(response.status,200);assert.match(response.headers.get('content-type'),/^application\/json/);
   assert.deepEqual(await response.json(),metadata);
   assert.equal(metadata.x402Support,false);assert.equal(metadata.services.length,1);assert.equal(metadata.services[0].name,'web');
+  assert.deepEqual(metadata.registrations,[{agentId:10051,agentRegistry:'eip155:42220:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432'}]);
+  assert.equal(metadata.services[0].endpoint,'https://oyacheck-beta.onrender.com/');
   for (const path of ['/api/mainnet/session','/api/buy/quote','/api/buy/inspect']) assert.equal((await fetch(origin+path)).status,403);
 });
 

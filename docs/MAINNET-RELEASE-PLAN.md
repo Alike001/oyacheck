@@ -1,6 +1,8 @@
 # OyaCheck mainnet pilot: implementation, release and approval plan
 
-Update: [identity and read-only release candidate](IDENTITY-AND-RELEASE-RC.md)
+Current registration and buy blockers: [post-registration release candidate](POST-REGISTRATION-RELEASE.md).
+
+Earlier update: [identity and read-only release candidate](IDENTITY-AND-RELEASE-RC.md)
 records the issued event tag, current ERC-8004 procedure and stricter hosted
 financial lockout. Production/Render purchase ledgers are now blocked by code;
 this local pilot plan does not authorize enabling them.

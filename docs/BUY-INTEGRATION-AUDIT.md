@@ -1,8 +1,9 @@
 # Build with buy integration and readiness audit
 
-Current follow-up: [identity and read-only release candidate](IDENTITY-AND-RELEASE-RC.md).
-The event code is now known (`celo_03e76ac742c7`); agent wallet/identity remain
-unverified. The historical findings below are retained as baseline evidence.
+Current follow-up: [post-registration metadata and buy readiness](POST-REGISTRATION-RELEASE.md).
+The registered wallet and genuine mined agent ID 10051 are known; finalized
+verification remains pending in the latest recorded multi-RPC check. No mainnet
+buy purchase is authorized or completed. Historical findings below are baseline.
 
 Historical baseline audit. The later [mainnet preparation and release plan](MAINNET-RELEASE-PLAN.md) supersedes its implementation/readiness status; historical sandbox receipts remain valid.
 
