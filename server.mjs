@@ -191,9 +191,10 @@ const server = http.createServer(async (req,res)=>{
     if(req.headers['content-type']?.split(';')[0] !== 'application/json') {respond(res,415,{error:'Send JSON'});return;}
     try{
       const body=await readJSON(req);
-      const result=analyze(body.input,body.language);
-      const explanation = rateAllowed(ip,'ai') ? await groqExplanation(result) : { text:fallbackExplanation(result), method:'prepared-text' };
-      respond(res,200,{...result,explanation});
+      if(body.mode!==undefined&&!['url','message','auto'].includes(body.mode))throw new Error('Unsupported analysis mode');
+      const result=analyze(body.input,body.language,body.mode);
+      const explanation = body.explain!==false && rateAllowed(ip,'ai') ? await groqExplanation(result) : { text:fallbackExplanation(result), method:'prepared-text' };
+      respond(res,200,{...result,checkedAt:new Date().toISOString(),explanation});
     }catch(e){if(!res.headersSent && !res.destroyed)respond(res,400,{error:'Invalid or oversized request'});}
     return;
   }
@@ -205,7 +206,7 @@ const server = http.createServer(async (req,res)=>{
       if(typeof body.question !== 'string' || body.question.length>450 || !Array.isArray(body.history) && body.history!==undefined) {
         respond(res,400,{error:'Invalid question or history'});return;
       }
-      const report=analyze(body.input,body.language);
+      const report=analyze(body.input,body.language,body.mode);
       const answer=await chatReply(report,body.question,body.history);
       respond(res,200,{answer,status:report.status,host:report.host,language:report.language});
     }catch{if(!res.headersSent && !res.destroyed)respond(res,400,{error:'Invalid or oversized request'});}

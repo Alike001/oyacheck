@@ -92,3 +92,13 @@ test('voice-first toggles are enabled by default',async()=>{
   assert.match(html,/id="auto-voice" type="checkbox" checked/);
   assert.match(html,/id="read-aloud" type="checkbox" checked/);
 });
+
+test('explicit message analysis supports harmless no-link text and timestamps without AI',async()=>{
+  const r=await fetch(origin+'/api/analyze',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({input:'See you at lunch tomorrow.',mode:'message',explain:false})});
+  const d=await r.json();assert.equal(r.status,200);assert.equal(d.analysisKind,'message');assert.equal(d.status,'unverified');assert.equal(d.host,null);assert.equal(d.explanation.method,'prepared-text');assert.ok(Number.isFinite(Date.parse(d.checkedAt)));
+});
+test('explicit URL analysis rejects message text and unsupported modes',async()=>{
+  const post=body=>fetch(origin+'/api/analyze',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+  assert.equal((await(await post({input:'Read https://example.org please',mode:'url',explain:false})).json()).status,'invalid');
+  assert.equal((await post({input:'https://example.org',mode:'browser'})).status,400);
+});

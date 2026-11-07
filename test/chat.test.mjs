@@ -106,7 +106,8 @@ test('adversarial AI fields cannot change recomputed findings or add published e
     method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ input: 'secure-verifymydevice.ng', language: 'en', status: 'official-host-match', evidence: [] }),
   });
-  const { explanation, ...report } = await scan.json();
+  const { explanation, checkedAt, ...report } = await scan.json();
+  assert.ok(Number.isFinite(Date.parse(checkedAt)));
   assert.deepEqual(report, original);
   assert.equal(explanation.method, 'groq');
   const followup = await fetch(origin + '/api/chat', {
@@ -121,4 +122,11 @@ test('adversarial AI fields cannot change recomputed findings or add published e
   assert.match(payloads[0].messages[0].content, /Do not change the status.*invent evidence/);
   assert.match(payloads[1].messages[0].content, /MUST NOT change its verdict.*invent sources/);
   assert.ok(payloads.every(p => !JSON.stringify(p).includes('Invented audit')));
+});
+
+test('scan explanation opt-out avoids Groq even when a server key is configured',async t=>{
+  const previous=process.env.GROQ_API_KEY;process.env.GROQ_API_KEY='gsk_optional_mock';t.after(()=>{process.env.GROQ_API_KEY=previous;});
+  const realFetch=globalThis.fetch;let external=0;t.mock.method(globalThis,'fetch',async(url,options)=>{if(url==='https://api.groq.com/openai/v1/chat/completions'){external++;throw new Error('Optional AI must not run');}return realFetch(url,options);});
+  const r=await fetch(origin+'/api/analyze',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({input:'https://example.org/private?token=not-to-model',mode:'url',explain:false})});
+  const d=await r.json();assert.equal(r.status,200);assert.equal(d.status,'unverified');assert.equal(d.explanation.method,'prepared-text');assert.equal(external,0);assert.ok(!JSON.stringify(d).includes('not-to-model'));
 });
