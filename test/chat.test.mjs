@@ -61,7 +61,7 @@ test('conversation UI has a single prompt and separate evidence desk',async()=>{
   assert.match(html,/id="check-form"/);
   assert.match(html,/id="message-input"/);
   assert.match(html,/id="evidence-result"/);
-  assert.match(html,/Questions and links belong in the same conversation/);
+  assert.match(html,/Check a link or forwarded message/);
   const direct=await fetch(origin+'/api/ai',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});
   assert.equal(direct.status,404);
 });

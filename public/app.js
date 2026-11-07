@@ -56,6 +56,9 @@ let browserSandboxEnabled = false;
 let pendingQuote = null;
 let quoteExpiresAt = 0;
 let language = 'en';
+let checkMode = 'url';
+let lastScanMode = 'url';
+let landingMode = 'url';
 let report = null;
 let lastScanInput = null;
 let conversation = [];
@@ -73,7 +76,7 @@ const HAS_LINK = /(?:https?:\/\/\S+|www\.[a-z0-9-]+\.[a-z]{2,}|(?:[a-z\d-]+\.)+[
 async function jsonPost(path, body) {
   const response = await fetch(path, {
     method: 'POST', headers: { 'Content-Type':'application/json' },
-    body: JSON.stringify(body),
+    body: JSON.stringify(body), signal:AbortSignal.timeout(20000),
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -88,7 +91,10 @@ function setBusy(busy) {
   sendButton.disabled = busy;
   if (micButton) micButton.disabled = busy;
   input.disabled = busy;
-  sendButton.textContent = busy ? 'Working…' : 'Send ↗';
+  sendButton.textContent = busy ? 'Checking…' : checkMode==='ask' ? 'Ask question ↗' : checkMode==='message' ? 'Check message ↗' : 'Check link ↗';
+  for(const button of document.querySelectorAll('[data-check-mode], .lang-button'))button.disabled=busy;
+  form.setAttribute('aria-busy',String(busy));
+  $('#new-chat').disabled=busy;
 }
 function removeWelcome() {
   const welcome = chat.querySelector('.empty-welcome');
@@ -145,16 +151,19 @@ function updateEvidence(data) {
   browserOutput.hidden = true;
   browserOutput.replaceChildren();
   inspectSource.hidden = true;
-  browserInvestigation.hidden = !(data.evidence||[]).some(e => typeof e.url === 'string' && e.url.startsWith('https://csirt.ncc.gov.ng/'));
+  browserInvestigation.hidden = !browserSandboxEnabled || !(data.evidence||[]).some(e => typeof e.url === 'string' && e.url.startsWith('https://csirt.ncc.gov.ng/'));
   quoteSource.disabled = !browserSandboxEnabled;
-  browserProgress.textContent = browserSandboxEnabled ? 'Optional sandbox-only inspection. No money spent until you confirm.' : 'Disabled by default. Enable on your local server using BUY_BROWSER_SANDBOX=1.';
+  browserProgress.textContent = browserSandboxEnabled ? 'Optional sandbox-only inspection. No money spent until you confirm.' : 'Paid advisory refresh is unavailable in the public beta. General paid website inspection is unsupported.';
   evidenceEmpty.hidden = true;
   evidenceResult.hidden = false;
   evidenceResult.dataset.status = data.status;
   evidenceIndicator.textContent = data.status === 'known-phishing' ? 'PUBLISHED MATCH' : data.status === 'official-host-match' ? 'HOSTNAME MATCH' : data.status === 'suspicious' ? 'CAUTION' : data.status === 'invalid' ? 'INVALID' : 'UNVERIFIED';
   findingTitle.textContent = data.label || 'No finding';
-  findingIcon.textContent = data.status === 'official-host-match' ? '✓' : data.status === 'known-phishing' || data.status === 'suspicious' ? '!' : '?';
-  findingHost.textContent = data.host || 'No public hostname';
+  findingIcon.textContent = data.status === 'official-host-match' ? 'i' : data.status === 'known-phishing' || data.status === 'suspicious' ? '!' : '?';
+  findingHost.textContent = data.host || (data.analysisKind==='message' ? 'Message only · no hostname' : 'No valid public hostname');
+  $('#finding-time').textContent=data.checkedAt ? new Date(data.checkedAt).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}) : 'Not recorded';
+  $('#finding-time').dateTime=data.checkedAt || '';
+  $('#coverage-note').textContent=data.analysisKind==='message'&&!data.host ? 'Message patterns only. Sender, claims and attachments remain unverified.' : data.evidence.length ? 'Source match from the manually curated NCC advisory list. This does not verify the live page.' : 'No published threat match in our small NCC list. URL/message patterns are not a comprehensive threat or reputation check.';
   findingReasons.replaceChildren();
   for (const r of data.reasons || []) {const li=document.createElement('li');li.textContent = r.text;findingReasons.append(li);}
   findingSources.replaceChildren();
@@ -181,7 +190,10 @@ async function send(raw, force = 'auto') {
   const text=String(raw||'').trim();
   if (!text || isBusy) return;
   if (recordState) {voiceMessage('Stop your recording before sending.');return;}
-  const scan = force === 'scan' || (force !== 'ask' && HAS_LINK.test(text));
+  if(force==='ask')selectCheckMode('ask');
+  if(force==='scan')selectCheckMode(/\s/.test(text)?'message':'url');
+  const scan = force === 'scan' || (force !== 'ask' && checkMode!=='ask');
+  const requestedMode=checkMode;
   if (!scan && text.length > 450) {
     message('assistant',language === 'pcm' ? 'Abeg make your question short, no pass 450 characters.' : 'Please make your question shorter than 450 characters.','local-guard'); return;
   }
@@ -189,31 +201,73 @@ async function send(raw, force = 'auto') {
     message('assistant','Please send one link or message under 2,000 characters.','local-guard');return;
   }
   stopSpeech();
-  input.value='';setBusy(true);
+  $('#request-error').hidden=true;$('#retry-check').hidden=true;
+  input.value=text;setBusy(true);
+  if(scan){
+    report=null;lastScanInput=null;pendingQuote=null;quoteExpiresAt=0;inspectSource.hidden=true;browserInvestigation.hidden=true;mainnetQuote.disabled=true;
+    evidenceResult.hidden=true;evidenceEmpty.hidden=false;evidenceIndicator.textContent='CHECKING';
+    evidenceEmpty.querySelector('h3').textContent='Examining the available signs…';
+    evidenceEmpty.querySelector('p').textContent='Checking the text and address only. No submitted website is being visited.';
+  }
   message('user',text);
   const loading=message('assistant',scan ? (language==='pcm'?'I dey compare the link with evidence we get…':'Comparing this link with available evidence…') : (language==='pcm'?'I dey think about your question…':'Thinking about your question…'),'status');
   loading.classList.add('is-thinking');
   try {
     if (scan) {
-      const data=await jsonPost('/api/analyze',{input:text,language});
+      const data=await jsonPost('/api/analyze',{input:text,language,mode:requestedMode,explain:$('#ai-explanation').checked});
       loading.remove();
       updateEvidence(data);
-      lastScanInput=text;
+      lastScanInput=text;lastScanMode=requestedMode;
       conversation=[];
       const reply = data.explanation?.text || (language === 'pcm' ? 'We no get explanation for this check yet.' : 'An explanation is not available for this check.');
       message('assistant',`${data.label}. ${reply}`,data.explanation?.method || 'prepared-text',quickActions);
-      if(data.explanation?.method !== 'groq') voiceMessage('Live AI was unavailable for this explanation; the evidence result is unchanged.');
+      if(data.explanation?.method !== 'groq') voiceMessage($('#ai-explanation').checked?'Live AI was unavailable; prepared guidance is shown. The findings are unchanged.':'Prepared English/Pidgin guidance. AI explanations are optional; no website was visited.');
     } else {
-      const response=demoActive ? await jsonPost('/api/demo/ask',{question:text,language,history:conversation}) : report && lastScanInput ? await jsonPost('/api/chat',{question:text,input:lastScanInput,language,history:conversation}) : await jsonPost('/api/ask',{question:text,language,history:conversation});
+      const response=demoActive ? await jsonPost('/api/demo/ask',{question:text,language,history:conversation}) : report && lastScanInput ? await jsonPost('/api/chat',{question:text,input:lastScanInput,mode:lastScanMode,language,history:conversation}) : await jsonPost('/api/ask',{question:text,language,history:conversation});
       loading.remove();
       message('assistant',response.answer?.text || 'No answer available.',response.answer?.method || 'prepared-text');
-      if(response.answer?.method === 'prepared-text') voiceMessage('Groq could not answer this turn; offline guidance was shown. Check your API quota or connection.');
+      if(response.answer?.method === 'prepared-text') voiceMessage('AI could not answer this turn; prepared guidance is shown. You can keep using the checker.');
       trackConversation('user',text);
       if(response.answer?.method==='groq' || response.answer?.method==='prepared-text') trackConversation('assistant',response.answer.text);
     }
-  }catch(e){loading.remove();message('assistant',e.message,'error');}
-  finally{setBusy(false);input.focus();}
+  }catch(e){loading.remove();const errorText=e.name==='TimeoutError'?'The request timed out. Your input is still here; try again when you’re ready.':e.message;$('#request-error').textContent=errorText;$('#request-error').hidden=false;$('#retry-check').hidden=false;message('assistant',errorText,'error');if(scan){evidenceIndicator.textContent='INCOMPLETE';evidenceEmpty.querySelector('h3').textContent='This check could not finish.';evidenceEmpty.querySelector('p').textContent='Your input is still in the form. Retry when you’re ready; no result was produced for this request.';}}
+  finally{setBusy(false);if(scan && report && lastScanInput===text && $('#request-error').hidden){findingTitle.focus({preventScroll:true});if(innerWidth<900)evidenceResult.scrollIntoView({block:'start',behavior:'instant'});}else input.focus();}
 }
+function selectCheckMode(mode) {
+  checkMode=['url','message','ask'].includes(mode)?mode:'url';
+  const copy={url:['Website address','Paste one public URL or domain…','One public HTTP(S) address. No submitted site will be opened.'],message:['Forwarded message','Paste the message you received…','Messages with or without a link. Remove private details. Multiple links must be checked separately.'],ask:['Safety question','Ask about the findings or online safety…','Optional conversation. Questions may be sent to Groq when configured; never include secrets.']}[checkMode];
+  $('#input-label').textContent=copy[0];input.placeholder=copy[1];$('#input-guidance').textContent=copy[2];
+  for(const b of document.querySelectorAll('[data-check-mode]'))b.setAttribute('aria-pressed',String(b.dataset.checkMode===checkMode));
+  setBusy(isBusy);
+}
+function showView(focus=false) {
+  const app=location.pathname==='/app'||location.hash==='#assistant';
+  $('#home-view').hidden=app;$('#app-view').hidden=!app;
+  if(!app){stopSpeech();voiceEpoch++;if(recordState){discardRecording=true;try{if(recorder?.state==='recording')recorder.stop();}catch{}cleanupAudio();}}
+  for(const a of document.querySelectorAll('.nav-app')){if(app)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}
+  document.title=app?'OyaCheck — Link and message checker':'OyaCheck — Check a link before you trust it';
+  if(focus){if(app)input.focus({preventScroll:true});else if(location.hash){const target=document.getElementById(location.hash.slice(1));if(target){target.setAttribute('tabindex','-1');target.focus({preventScroll:true});target.scrollIntoView();}}else {scrollTo(0,0);$('#intro-title').setAttribute('tabindex','-1');$('#intro-title').focus({preventScroll:true});}}
+}
+function navigate(path) {if(path!==location.pathname+location.hash)history.pushState(null,'',path);showView(true);}
+document.addEventListener('click',event=>{
+  const a=event.target.closest('a[href]');if(!a||event.defaultPrevented||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey||a.target)return;
+  const url=new URL(a.href);if(url.origin!==location.origin||!['/','/app'].includes(url.pathname))return;
+  event.preventDefault();navigate(url.pathname+url.hash);
+});
+addEventListener('popstate',()=>showView(true));
+for(const button of document.querySelectorAll('[data-check-mode]'))button.addEventListener('click',()=>{selectCheckMode(button.dataset.checkMode);input.focus();});
+for(const button of document.querySelectorAll('[data-landing-mode]'))button.addEventListener('click',()=>{
+  landingMode=button.dataset.landingMode;
+  for(const b of document.querySelectorAll('[data-landing-mode]'))b.setAttribute('aria-pressed',String(b.dataset.landingMode===landingMode));
+  $('#landing-label').textContent=landingMode==='url'?'Website address':'Forwarded message';
+  $('#landing-input').placeholder=landingMode==='url'?'https://example.com':'Paste the message you received…';
+  $('#landing-guidance').textContent=landingMode==='url'?'Paste one public URL or domain. We won’t open it.':'Messages with or without a link. Remove private details.';
+  document.querySelector('.landing-submit').textContent=landingMode==='url'?'Check this link →':'Check this message →';
+});
+$('#landing-form').addEventListener('submit',event=>{event.preventDefault();if(isBusy)return;const value=$('#landing-input').value;selectCheckMode(landingMode);input.value=value;navigate('/app');send(value);});
+$('#retry-check').addEventListener('click',()=>send(input.value));
+$('#new-check').addEventListener('click',()=>{$('#new-chat').click();input.focus();input.scrollIntoView({block:'center',behavior:'instant'});});
+showView();
 form.addEventListener('submit',event=>{event.preventDefault();send(input.value);});
 input.addEventListener('keydown',event=>{
   if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();form.requestSubmit();}
@@ -227,7 +281,9 @@ for(const button of document.querySelectorAll('.lang-button')){
     language=button.dataset.lang === 'pcm'?'pcm':'en';
     document.documentElement.lang=language==='pcm'?'pcm':'en';
     for(const b of document.querySelectorAll('.lang-button')){const selected=b.dataset.lang===language;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected));}
-    input.placeholder=language==='pcm'?'Talk or type your question or link…':'Paste a link, type a question or use the microphone…';
+    selectCheckMode(checkMode);
+    // Re-translate a completed deterministic check only on this explicit choice.
+    if(report && lastScanInput && !isBusy && !recordState){const value=input.value;const mode=checkMode;checkMode=lastScanMode;send(lastScanInput).finally(()=>{checkMode=mode;input.value=value;selectCheckMode(mode);});}
     stopSpeech();
   });
 }
@@ -243,7 +299,8 @@ $('#new-chat').addEventListener('click',()=>{
   const desc=document.createElement('p');desc.textContent='Paste a link, share a forwarded message, or ask about online safety.';
   welcome.append(icon,kicker,title,desc);chat.append(welcome);
   if (buyConfirmDialog.open) buyConfirmDialog.close('cancel');
-  mainnetQuote.disabled=true;report=null;lastScanInput=null;demoActive=false;conversation=[];pendingQuote=null;quoteExpiresAt=0;browserInvestigation.hidden=true;input.value='';evidenceResult.hidden=true;evidenceEmpty.hidden=false;evidenceIndicator.textContent='NO CHECK YET';input.focus();
+  $('#request-error').hidden=true;$('#retry-check').hidden=true;
+  mainnetQuote.disabled=true;report=null;lastScanInput=null;demoActive=false;conversation=[];pendingQuote=null;quoteExpiresAt=0;browserInvestigation.hidden=true;input.value='';evidenceResult.hidden=true;evidenceEmpty.hidden=false;evidenceIndicator.textContent='NO CHECK YET';evidenceEmpty.querySelector('h3').textContent='Your next check starts here.';evidenceEmpty.querySelector('p').textContent='Paste a link or forwarded message. Findings and limits will appear here.';input.focus();
 });
 copyReportButton.addEventListener('click',async()=>{
   if(!report)return;

@@ -33,7 +33,7 @@ export async function verifyBuyBrowser(page, origin = 'http://127.0.0.1:4173') {
   await page.route(`${base.origin}/api/health`, healthRoute);
   await page.route(`${base.origin}/api/buy/**`, buyRoute);
   try {
-    await page.goto(base.origin);
+    await page.goto(base.origin+'/app');
     await page.setViewportSize({ width: 320, height: 850 });
     await page.locator('#read-aloud').uncheck();
     await page.locator('#message-input').fill('secure-verifymydevice.ng');

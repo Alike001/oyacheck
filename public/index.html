@@ -3,69 +3,90 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0d2d28">
-  <meta name="description" content="An interactive Nigerian link-safety assistant. Ask questions, examine evidence, and understand warnings in English or Pidgin.">
+  <meta name="theme-color" content="#102538">
+  <meta name="description" content="Check suspicious links and forwarded messages with clear evidence, honest limits and additional Nigerian scam intelligence. English and Nigerian Pidgin.">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/product.css">
   <script type="module" src="/app.js"></script>
-  <title>OyaCheck — Check before you click</title>
+  <title>OyaCheck — Check a link before you trust it</title>
 </head>
 <body>
   <a class="skip" href="#assistant">Skip to assistant</a>
   <div class="app-shell">
     <header class="site-header">
-      <a href="/" class="brand" aria-label="OyaCheck home"><span class="brand-icon">✳</span><span>OyaCheck<span class="brand-country"> · beta</span></span></a>
-      <div class="header-mid"><span class="header-separator"></span><span>YOUR DIGITAL SECOND LOOK</span></div>
-      <div class="header-actions"><span class="privacy-chip"><span class="privacy-pulse"></span>Private by default</span><a class="header-about" href="#how">How it works <span aria-hidden="true">↗</span></a></div>
+      <a href="/" class="brand" aria-label="OyaCheck home"><span class="brand-icon" aria-hidden="true">↗</span><span>OyaCheck<span class="brand-country"> / beta</span></span></a>
+      <nav class="main-nav" aria-label="Main navigation"><a href="/#product">Product</a><a href="/#how">How It Works</a><a href="/#faq">FAQ</a><a class="nav-app" href="/app">Open App <span aria-hidden="true">↗</span></a></nav>
     </header>
 
     <main>
-      <section class="intro" aria-labelledby="intro-title">
-        <div class="intro-copy">
-          <div class="eyebrow"><span class="eyebrow-line"></span> AN ASSISTANT FOR THE LINKS THAT MAKE YOU PAUSE</div>
-          <h1 id="intro-title">Before you click,<br><em>OyaCheck.</em></h1>
-          <p>Got a strange message? An official-looking link? Ask a question or paste it here. We'll tell you what the evidence says — and what we can't confirm.</p>
-          <div class="intro-chips"><span>English + Pidgin</span><span>Talk or type</span><span>No account required</span></div>
-        </div>
-        <div class="intro-right" aria-label="How the assistant works">
-          <div class="intro-glow" aria-hidden="true"></div>
-          <div class="teaser-top"><span class="teaser-star">✺</span><span>YOUR SECOND LOOK</span><span class="teaser-live">EARLY ACCESS</span></div>
-          <div class="teaser-message"><span class="teaser-label">FORWARDED MESSAGE</span><p>"Your device will be blocked today. Verify now at secure-verifymydevice.ng"</p></div>
-          <div class="teaser-track" aria-hidden="true"><span></span><span></span><span></span></div>
-          <div class="teaser-result"><div class="teaser-alert">!</div><div><strong>Reported phishing domain</strong><span>Matched to a published NCC-CSIRT advisory</span></div><span class="teaser-check">✓</span></div>
-          <p class="teaser-note">A matching advisory is evidence. Unknown does not mean safe.</p>
-        </div>
+      <noscript><p class="noscript-note">JavaScript is needed for the interactive checker. Your input will not be checked without it. No submitted website is opened.</p></noscript>
+      <section id="home-view" aria-labelledby="intro-title">
+        <section class="landing-hero">
+          <div class="hero-copy">
+            <p class="eyebrow">A little pause. A better decision.</p>
+            <h1 id="intro-title">Check a link<br>before you trust it.</h1>
+            <p class="hero-description">Strange link? Convincing forwarded message? Take a second look at the address, the warning signs and the evidence — in English or Nigerian Pidgin.</p>
+            <div class="hero-actions"><a class="primary-link" href="/app">Check a Link <span aria-hidden="true">↗</span></a><a class="text-link" href="/app">Open App <span aria-hidden="true">→</span></a></div>
+            <p class="hero-note">For everyday links. With additional Nigerian scam intelligence.</p>
+          </div>
+          <form id="landing-form" action="/app" method="post" class="landing-check" aria-label="Start a link or message check">
+            <div class="form-topline"><span class="small-label">START WITH WHAT YOU RECEIVED</span><span class="form-mark" aria-hidden="true">↗</span></div>
+            <h2>Let’s take a closer look.</h2>
+            <div class="input-modes" role="group" aria-label="What do you want to check?"><button type="button" data-landing-mode="url" aria-pressed="true">A link</button><button type="button" data-landing-mode="message" aria-pressed="false">A forwarded message</button></div>
+            <label for="landing-input" id="landing-label">Website address</label>
+            <textarea id="landing-input" maxlength="2000" rows="4" placeholder="https://example.com" required aria-describedby="landing-guidance" spellcheck="false" autocapitalize="none"></textarea>
+            <p id="landing-guidance">Paste one public URL or domain. We won’t open it.</p>
+            <button class="landing-submit" type="submit">Check this link <span aria-hidden="true">→</span></button>
+            <p class="form-privacy">No account or wallet needed. Remove private details, passwords and access tokens before pasting.</p>
+          </form>
+        </section>
+        <div class="trust-strip" aria-label="Our approach"><span>No suspicious websites opened</span><span>Evidence, not a safety guarantee</span><span>English &amp; Nigerian Pidgin</span></div>
+        <section class="product-section" id="product" aria-labelledby="product-title">
+          <div class="section-intro"><p class="section-kicker">A SECOND LOOK, NOT A GUESS</p><h2 id="product-title">Understand what<br>deserves your attention.</h2><p>Scams don’t all look the same. OyaCheck brings the address and the available evidence into focus, while being clear about what remains unknown.</p></div>
+          <div class="capability-list">
+            <article><span class="capability-number">01</span><div><h3>Look beyond the familiar name</h3><p>See the actual hostname, misleading subdomains, encoded names, shortened links and other address warning signs. We don’t follow the link.</p></div></article>
+            <article><span class="capability-number">02</span><div><h3>Make sense of the message</h3><p>Examine wording for urgency and sensitive-information requests. Plain English and Pidgin guidance help you choose your next step.</p></div></article>
+            <article><span class="capability-number">03</span><div><h3>Know where the evidence comes from</h3><p>A small, curated NCC advisory list adds Nigerian scam intelligence. Unlisted links remain unverified; there is no comprehensive threat database.</p></div></article>
+          </div>
+        </section>
+        <section class="steps-section" id="how" aria-labelledby="how-title"><div class="section-heading"><p class="section-kicker">HOW IT WORKS</p><h2 id="how-title">From “is this real?” to a clearer next step.</h2></div><ol class="steps-list"><li><span>01 / PASTE</span><h3>Start with the link or message</h3><p>Choose what you’re checking and paste it. Leave out private details.</p></li><li><span>02 / EXAMINE</span><h3>Look at the warning signs</h3><p>Read the hostname, deterministic findings and any published source matches.</p></li><li><span>03 / UNDERSTAND</span><h3>Keep the limits in view</h3><p>No known threat found does not mean safe. Confirm important requests through a trusted channel.</p></li></ol></section>
+        <section class="privacy-section" id="privacy" aria-labelledby="privacy-title"><div><p class="section-kicker">CAREFUL WITH YOUR DATA</p><h2 id="privacy-title">Check the link.<br>Keep your private details.</h2></div><div><p>Your input goes to OyaCheck’s server for analysis. The checker doesn’t visit the submitted site or put your input in a public link, analytics or browser storage.</p><p>AI explanations are optional and use bounded findings, not the original URL’s path or query. Questions may be sent to Groq when configured. Voice starts only when you choose Speak; transcription may use Groq or your browser’s speech service. Don’t paste or say passwords, OTPs, BVN, NIN or private access links.</p><p>We don’t inspect live pages, redirects, downloads or forms, and we can’t guarantee that a link or message is safe. Paid inspection of arbitrary sites is not supported; paid features are off in the public beta.</p></div></section>
+        <section class="faq-section" id="faq" aria-labelledby="faq-title"><div class="section-intro"><p class="section-kicker">GOOD QUESTIONS</p><h2 id="faq-title">Before you check.</h2><a class="inline-link" href="/app">Open the checker →</a></div><div class="faq-list"><details><summary>Can I check any link?</summary><p>You can examine one syntactically valid public HTTP(S) URL or domain at a time. Checks cover the address and text patterns, not the live website. Private addresses and unsupported schemes are rejected.</p></details><details><summary>What does “no known threat found” mean?</summary><p>The hostname is not in our small curated threat list and no configured warning pattern was found. New scams can pass these checks. It is never a safe verdict.</p></details><details><summary>Is this only for Nigerian links?</summary><p>No. General URL and message checks work independently of NCC. Nigerian advisories provide additional, narrow source evidence when a listed hostname matches.</p></details><details><summary>Can it check a forwarded message without a link?</summary><p>Yes. Choose forwarded message to examine wording patterns. OyaCheck cannot authenticate the sender, verify the story, or inspect attachments.</p></details><details><summary>Do I need a wallet or pay to check?</summary><p>No. The public checker needs neither. The existing buy integration only refreshes a fixed NCC advisory in a separately authorized local environment. It does not inspect your submitted website.</p></details></div></section>
       </section>
 
+      <section id="app-view" hidden aria-labelledby="app-title">
       <section class="main-workspace" id="assistant" aria-label="Interactive assistant and evidence workspace">
-        <div class="workspace-caption"><div class="workspace-title"><span class="workspace-index">01 / THE ASSISTANT</span><h2>Talk it through.</h2></div><p>Questions and links belong in the same conversation. The actual evidence stays visible beside it.</p></div>
+        <div class="workspace-caption"><div class="workspace-title"><span class="workspace-index">THE OYACHECK ASSISTANT</span><h1 id="app-title" tabindex="-1">A second look, with the facts in view.</h1></div><p>Check a link or forwarded message. Read the evidence, then ask a follow-up.</p></div>
         <div class="workspace-grid">
           <section class="chat-panel" aria-label="Interactive safety assistant">
             <div class="panel-header">
-              <div class="assistant-ident"><div class="assistant-avatar" aria-hidden="true">✳</div><div><strong>Your OyaCheck guide</strong><span>Ask, check, follow up</span></div></div>
+              <div class="assistant-ident"><div class="assistant-avatar" aria-hidden="true">✳</div><div><strong>Your OyaCheck guide</strong><span>Deterministic findings · optional explanations</span></div></div>
               <div class="panel-actions"><span id="ai-status" class="ai-status offline"><span></span>Checking AI…</span><button id="new-chat" class="icon-button" type="button" title="Start a new conversation" aria-label="Start new conversation">↺</button></div>
-            </div>
-            <div class="chat-stream" id="chat-stream" role="log" aria-live="polite" aria-label="Assistant conversation">
-              <div class="empty-welcome"><span class="welcome-orbit" aria-hidden="true">✳</span><span class="welcome-kicker">HELLO THERE</span><h3>What do you want to check?</h3><p>Paste a suspicious link, forward the message you received, or ask me a question about online safety.</p></div>
             </div>
             <div class="composer-zone">
               <div class="suggestions" id="suggestions" aria-label="Try these examples">
                 <button type="button" data-example="Your device will be blocked today. Verify at secure-verifymydevice.ng" data-intent="scan"><span class="suggestion-icon">↗</span> Check a reported scam</button>
-                <button type="button" data-example="https://verifymydevice.gov.ng" data-intent="scan"><span class="suggestion-icon">✓</span> Check an official domain</button>
+                <button type="button" data-example="https://example.org" data-intent="scan"><span class="suggestion-icon">✓</span> Try a general URL</button>
                 <button type="button" data-example="How can I tell if a message is phishing?" data-intent="ask"><span class="suggestion-icon">?</span> Ask a question</button>
                 <button id="demo-shortcut" type="button"><span class="suggestion-icon">◈</span> Browser lab</button>
               </div>
-              <form id="check-form" class="composer" aria-label="Message the assistant">
-                <label class="sr-only" for="message-input">Link, forwarded message or question</label>
-                <textarea id="message-input" rows="2" maxlength="2000" placeholder="Paste a link, type a question or use the microphone…" required></textarea>
+              <div class="input-modes app-modes" role="group" aria-label="Analysis mode"><button type="button" data-check-mode="url" aria-pressed="true">Check a link</button><button type="button" data-check-mode="message" aria-pressed="false">Forwarded message</button><button type="button" data-check-mode="ask" aria-pressed="false">Ask a question</button></div>
+              <form id="check-form" action="/app" method="post" class="composer" aria-label="Message the assistant">
+                <label id="input-label" for="message-input">Website address</label>
+                <textarea id="message-input" rows="2" maxlength="2000" placeholder="Paste one public URL or domain…" aria-describedby="input-guidance" spellcheck="false" autocapitalize="none" required></textarea>
+                <p id="input-guidance">One public HTTP(S) address. No submitted site will be opened.</p><label class="ai-opt-in"><input type="checkbox" id="ai-explanation"> Add an optional AI explanation of the findings</label><p id="request-error" role="alert" hidden></p><button id="retry-check" type="button" hidden>Retry this check</button>
                 <div class="composer-bottom">
                   <div class="language-toggle" role="group" aria-label="Response language"><button class="lang-button selected" type="button" data-lang="en" aria-pressed="true">English</button><button class="lang-button" type="button" data-lang="pcm" aria-pressed="false">Pidgin</button></div>
-                  <div class="send-controls"><span id="composer-hint">Link = check · Question = chat</span><button id="mic-button" class="mic-button" type="button" aria-label="Start recording a voice question" aria-pressed="false" title="Record a short voice question">🎙 <span>Speak</span></button><button id="send-button" type="submit">Send <span aria-hidden="true">↗</span></button></div>
+                  <div class="send-controls"><span id="composer-hint">Read-only checks</span><button id="mic-button" class="mic-button" type="button" aria-label="Start recording a voice question" aria-pressed="false" title="Record a short voice question">🎙 <span>Speak</span></button><button id="send-button" type="submit">Check link <span aria-hidden="true">↗</span></button></div>
                 </div>
               </form>
               <div class="voice-row"><div class="voice-settings"><label class="speak-setting"><input id="auto-voice" type="checkbox" checked> Auto-send voice questions</label><label class="speak-setting"><input id="read-aloud" type="checkbox" checked> Speak answers</label></div><span id="voice-status" role="status" aria-live="polite">Tap Speak once. Recording stops automatically after you finish talking; spoken links still require review.</span><div id="voice-meter" class="voice-meter" hidden aria-hidden="true"><span id="voice-level"></span></div></div>
               <div class="voice-privacy">Recording starts only when you tap Speak. It stops after about 1.5 seconds of silence (or at 18 seconds); Stop is still available. Ordinary questions auto-send; detected URLs and private details need review. Audio is sent to Groq for transcription when configured. No recording is stored by OyaCheck. Device voices and Pidgin pronunciation vary.</div>
               <div class="composer-note"><span>✧ No wallet or account needed</span><span>Never share passwords, OTPs, BVN or NIN</span></div>
+            </div>
+            <div class="chat-stream" id="chat-stream" role="log" aria-live="polite" aria-label="Assistant conversation">
+              <div class="empty-welcome"><span class="welcome-orbit" aria-hidden="true">✳</span><span class="welcome-kicker">HELLO THERE</span><h3>What do you want to check?</h3><p>Paste a suspicious link, forward the message you received, or ask me a question about online safety.</p></div>
             </div>
           </section>
 
@@ -74,10 +95,10 @@
             <div class="evidence-content" id="evidence-empty"><div class="empty-illustration" aria-hidden="true"><div class="magnify-circle">⌕</div><span class="small-spark s1">✳</span><span class="small-spark s2">✧</span></div><h3>Facts over fear.</h3><p>When you share a link, we'll put the findings, the sources and the limits of our check right here.</p><div class="empty-lines" aria-hidden="true"><span></span><span></span><span></span></div></div>
             <div class="evidence-content" id="evidence-result" hidden>
               <div class="report-overline">CURRENT FINDING</div>
-              <div class="report-status"><span id="finding-icon" class="report-symbol">!</span><h3 id="finding-title">—</h3></div>
+              <div class="report-status"><span id="finding-icon" class="report-symbol">!</span><h3 id="finding-title" tabindex="-1">—</h3></div>
               <div class="detail-block"><span>DOMAIN EXAMINED</span><strong id="finding-host">—</strong></div>
-              <div class="report-overline report-spacing">WHAT WE FOUND</div><ul class="reason-list" id="finding-reasons"></ul>
-              <div id="source-group" class="source-group" hidden><div class="report-overline">PUBLISHED EVIDENCE</div><div id="finding-sources"></div></div>
+              <div class="detail-block"><span>CHECKED AT</span><time id="finding-time">—</time></div><div class="report-overline report-spacing">WHAT WE FOUND</div><ul class="reason-list" id="finding-reasons"></ul>
+              <p id="coverage-note" class="coverage-note">Evidence coverage: URL/message patterns and a small curated NCC list. No global reputation lookup.</p><div id="source-group" class="source-group" hidden><div class="report-overline">PUBLISHED EVIDENCE</div><div id="finding-sources"></div></div>
               <div class="browser-investigation" id="browser-investigation" hidden>
                 <div class="report-overline">LIVE OFFICIAL SOURCE CHECK · CELO BUY</div>
                 <p class="browser-explainer">Optionally rent a browser to inspect the published NCC advisory. This <strong>does not open or scan the suspicious link</strong>.</p>
@@ -90,6 +111,7 @@
               </div>
               <div id="official-group" class="official-group" hidden><div class="report-overline">OFFICIAL DESTINATION</div><a id="official-link" target="_blank" rel="noopener noreferrer"></a></div>
               <div class="report-limits"><strong><span class="limits-icon">ⓘ</span> What we haven't checked</strong><p id="scope-text">No live page inspection.</p></div>
+              <button type="button" id="new-check" class="new-check">Check something else →</button>
               <button type="button" id="copy-report" class="copy-report">Copy evidence report <span aria-hidden="true">↗</span></button>
             </div>
             <section id="mainnet-investigation" class="browser-investigation" aria-label="Mainnet source investigation preparation" hidden>
@@ -123,7 +145,7 @@
             <div class="evidence-footer"><span class="read-only-dot"></span> Read-only check <span>·</span> No suspicious link opened</div>
           </aside>
         </div>
-        <div class="workspace-disclaimer"><span>✧</span> This is an early prototype with narrow source coverage and experimental Pidgin voice. Only controlled training pages can be rendered in the local browser lab. We don't inspect submitted websites yet, and "unverified" never means "safe."</div>
+        <div class="workspace-disclaimer"><span>✧</span> No known threat found is not a safety guarantee. We check URL and message patterns, plus a small curated NCC list. No submitted website is visited. Broader paid inspection is unsupported and public paid features remain off.</div>
       </section>
       <!-- Explicit, accessible payment approval: no browser-native confirm dialog. -->
       <dialog id="buy-confirm-dialog" class="payment-dialog" aria-labelledby="buy-dialog-title" aria-describedby="buy-dialog-description">
@@ -149,9 +171,9 @@
         </div>
       </dialog>
 
-      <section class="how-section" id="how"><div class="how-heading"><span class="workspace-index">02 / HOW IT WORKS</span><h2>Less guessing. More clarity.</h2></div><div class="how-cards"><article><span class="how-num">01</span><h3>Send the message</h3><p>Paste a suspicious link or ask a safety question. Speak or type in English or Pidgin. Voice stops after a short pause and ordinary questions auto-send; spoken links require review.</p></article><article><span class="how-num">02</span><h3>Look at evidence</h3><p>Exact known-domain matches and URL warning signals are kept separate. Sources are cited when available.</p></article><article><span class="how-num">03</span><h3>Ask what happens next</h3><p>Follow up in the same conversation. AI explains the report but can't change the verdict or invent a page inspection.</p></article></div></section>
+      </section>
     </main>
-    <footer class="footer"><span>OyaCheck <span class="footer-dot">✳</span></span><span>Built for careful decisions, not false certainty.</span><span>English / Pidgin · Early prototype</span></footer>
+    <footer class="footer"><a class="brand" href="/">OyaCheck</a><p>For careful decisions, not false certainty.<br>General link checks. Additional Nigerian intelligence.</p><nav aria-label="Project links"><a href="/#privacy">Privacy &amp; limits</a><a href="https://github.com/Alike001/oyacheck" target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="/agent-registration.json">Agent metadata</a></nav><span>Celo agent 10051 · Public beta</span></footer>
   </div>
 </body>
 </html>

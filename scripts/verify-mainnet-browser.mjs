@@ -8,7 +8,7 @@ export async function verifyMainnetBrowser(page, origins) {
     const url=new URL(origin);check(url.hostname==='127.0.0.1'&&url.protocol==='http:','Local fixture required');
     const setMode=async value=>page.evaluate(async mode=>{const r=await fetch('/__mock/mode',{method:'POST',body:JSON.stringify({mode})});if(!r.ok)throw new Error('Financial fake is not available');},value);
     const scan=async()=>{await page.locator('#read-aloud').uncheck();await page.locator('#message-input').fill('secure-verifymydevice.ng');await page.locator('#message-input').press('Enter');await page.locator('#evidence-result[data-status="known-phishing"]').waitFor();};
-    await page.goto(origin);
+    await page.goto(origin+'/app');
     const stats=await page.evaluate(async()=>await(await fetch('/__mock/stats')).json());
     check(stats.mock===true&&stats.calls===0,'Fresh explicitly mocked financial fixture required');
     await scan();

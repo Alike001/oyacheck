@@ -16,7 +16,7 @@ export async function verifyGroqBrowser(page, origin = 'http://127.0.0.1:4173') 
   };
   await page.route(`${url.origin}/api/**`, guard);
   try {
-    await page.goto(url.origin);
+    await page.goto(url.origin+'/app');
     const health = await page.evaluate(async () => (await fetch('/api/health')).json());
     assert.equal(health.aiConfigured, true, 'No configured Groq key: zero provider requests made');
     for (const [language, question] of [

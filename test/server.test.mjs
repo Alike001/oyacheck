@@ -12,7 +12,7 @@ test('health distinguishes link inspection from optional source inspection',asyn
   const r=await fetch(origin+'/api/health');assert.equal(r.status,200);assert.equal((await r.json()).browserInspection,false);
 });
 test('homepage works',async()=>{
-  const r=await fetch(origin+'/');assert.equal(r.status,200);const html=await r.text();assert.match(html,/Before you click/);assert.match(html,/Pidgin/);
+  const r=await fetch(origin+'/');assert.equal(r.status,200);const html=await r.text();assert.match(html,/Check a link/);assert.match(html,/Pidgin/);
 });
 test('javascript and CSS accessible with CSP',async()=>{
   const r=await fetch(origin+'/app.js');assert.equal(r.status,200);assert.match(r.headers.get('content-security-policy'),/script-src 'self'/);
@@ -101,4 +101,9 @@ test('explicit URL analysis rejects message text and unsupported modes',async()=
   const post=body=>fetch(origin+'/api/analyze',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
   assert.equal((await(await post({input:'Read https://example.org please',mode:'url',explain:false})).json()).status,'invalid');
   assert.equal((await post({input:'https://example.org',mode:'browser'})).status,400);
+});
+
+test('direct app route and product styles retain security headers',async()=>{
+  const r=await fetch(origin+'/app');assert.equal(r.status,200);assert.match(r.headers.get('content-security-policy'),/connect-src 'self'/);const html=await r.text();assert.match(html,/id="app-view"/);assert.match(html,/id="landing-form" action="\/app" method="post"/);assert.doesNotMatch(html,/id="landing-input" name=/);
+  const css=await fetch(origin+'/product.css');assert.equal(css.status,200);assert.match(css.headers.get('content-type'),/text\/css/);
 });
