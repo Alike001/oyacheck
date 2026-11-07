@@ -80,3 +80,8 @@ test('late old recorder stop and error cannot close a new recording',async()=>{
 test('browser provider errors distinguish audio capture from network failure',async()=>{
   for(const [code,phrase]of [['audio-capture','microphone and device'],['network','connection'],['service-not-allowed','provider blocked'],['no-speech','No speech recognised']]){const f=fixture();await f.session.start();f.recognition.onerror({error:code});assert.match(f.states.at(-1).detail,new RegExp(phrase));assert.equal(f.states.at(-1).active,false);}
 });
+test('diagnostics local-only playback never selects remote voices',()=>{
+  const f=fixture();let spoken=0;f.env.speechSynthesis.getVoices=()=>[{name:'Remote English',lang:'en-NG',localService:false}];f.env.speechSynthesis.speak=()=>spoken++;
+  const states=[];const session=createVoiceSession({env:f.env,render:v=>states.push(v),transcript:async()=>{},getLanguage:()=> 'en',localPlaybackOnly:true});session.speak('test');assert.equal(spoken,0);assert.equal(states.at(-1).state,'error');
+  f.env.speechSynthesis.getVoices=()=>[{name:'Local English',lang:'en-GB',localService:true}];session.speak('test');assert.equal(spoken,1);
+});

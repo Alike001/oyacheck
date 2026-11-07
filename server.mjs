@@ -92,6 +92,15 @@ const server = http.createServer(async (req,res)=>{
   if(origin && origin !== expected && origin !== `http://${req.headers.host}` && origin !== `https://${req.headers.host}`) {
     respond(res,403,{error:'Cross-origin request blocked'});return;
   }
+  const diagnosticsFiles=new Map([['/voice-diagnostics',['voice-diagnostics.html','text/html']],['/voice-diagnostics.js',['voice-diagnostics.js','text/javascript']],['/voice-diagnostics.css',['voice-diagnostics.css','text/css']]]);
+  if(diagnosticsFiles.has(u.pathname)||u.pathname==='/api/voice/diagnostics'){
+    let localHost=false;try{localHost=['127.0.0.1','localhost','[::1]'].includes(new URL(`http://${req.headers.host}`).hostname);}catch{}
+    if(process.env.OYACHECK_VOICE_DIAGNOSTICS!=='1'||process.env.RENDER==='true'||!isLocalRequest(ip)||!localHost){respond(res,403,{error:'Local voice diagnostics disabled'});return;}
+    if(req.method!=='GET'){respond(res,405,{error:'Read-only diagnostics'});return;}
+    if(u.pathname==='/api/voice/diagnostics'){respond(res,200,{credentialsConfigured:keyIsConfigured(),configurationOnly:true,serverTranscriptionTest:'blocked: no provider call authorized',recordingsStored:false});return;}
+    const [name,type]=diagnosticsFiles.get(u.pathname);
+    try{const bytes=await readFile(new URL(`./local/${name}`,import.meta.url));res.writeHead(200,{'Content-Type':`${type}; charset=utf-8`,...securityHeaders()});res.end(bytes);}catch{respond(res,500,{error:'Diagnostics file unavailable'});}return;
+  }
   if (u.pathname.startsWith('/api/mainnet/')) {
     if(!rateAllowed(ip,'mainnet-prepare')) {respond(res,429,{error:'Preparation rate limited'});return;}
     await mainnetHTTP(req,res,u,{readJSON,respond});return;

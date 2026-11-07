@@ -1,7 +1,7 @@
 import {createVoiceActivityDetector, rmsLevel, VOICE_TIMING} from './voice-activity.js';
 
 // One user-initiated turn at a time. No recording, retry, or submission on load.
-export function createVoiceSession({env=window, render, transcript, getLanguage}) {
+export function createVoiceSession({env=window, render, transcript, getLanguage, localPlaybackOnly=false}) {
   let epoch=0, state='ready', configured=false, available=false, busy=false;
   let stream, recorder, recognition, context, interval, timer, upload, utterance, playbackTimer;
   const active=()=>['permission','listening','transcribing'].includes(state);
@@ -124,7 +124,7 @@ export function createVoiceSession({env=window, render, transcript, getLanguage}
     if(active()||busy)return;
     stopSpeech();
     if(!env.speechSynthesis||!env.SpeechSynthesisUtterance){update('error','Spoken output is unavailable. Read the findings on screen.');return;}
-    const voices=env.speechSynthesis.getVoices();
+    const voices=env.speechSynthesis.getVoices().filter(v=>!localPlaybackOnly||v.localService===true);
     const voice=voices.find(v=>v.lang.toLowerCase()==='en-ng')||voices.find(v=>v.lang.toLowerCase().startsWith('en'));
     if(!voice){update('error','No English playback voice is available on this device. Enable a system voice, then try again. Read the findings on screen.');return;}
     const speech=new env.SpeechSynthesisUtterance(String(text).replace(/\*\*/g,'').replace(/https?:\/\/\S+/g,'the link shown on screen').slice(0,1500));

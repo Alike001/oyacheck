@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { server } from '../server.mjs';
 import { once } from 'node:events';
+import { get } from 'node:http';
 
 // Tests run without Groq credentials, external requests, payment or blockchain.
 process.env.GROQ_API_KEY='';
@@ -136,4 +137,17 @@ test('visible voice docks and controller retain opt-in review and security heade
   const r=await fetch(origin+'/voice-session.js');assert.equal(r.status,200);
   assert.match(r.headers.get('content-security-policy'),/connect-src 'self'/);
   assert.match(await r.text(),/createVoiceSession/);
+});
+test('voice diagnostics require explicit local opt-in and cannot be exposed on Render or remote Host',async()=>{
+  const oldFlag=process.env.OYACHECK_VOICE_DIAGNOSTICS,oldRender=process.env.RENDER;
+  const paths=['/voice-diagnostics','/voice-diagnostics.js','/voice-diagnostics.css','/api/voice/diagnostics'];
+  try{
+    delete process.env.OYACHECK_VOICE_DIAGNOSTICS;for(const path of paths)assert.equal((await fetch(origin+path)).status,403);
+    process.env.OYACHECK_VOICE_DIAGNOSTICS='1';
+    for(const path of paths){const r=await fetch(origin+path);assert.equal(r.status,200);assert.equal(r.headers.get('cache-control'),'no-store');assert.match(r.headers.get('content-security-policy'),/connect-src 'self'/);}
+    const d=await(await fetch(origin+'/api/voice/diagnostics')).json();assert.equal(d.credentialsConfigured,false);assert.equal(d.configurationOnly,true);assert.match(d.serverTranscriptionTest,/blocked/);assert.equal(d.recordingsStored,false);assert.deepEqual(Object.keys(d).sort(),['configurationOnly','credentialsConfigured','recordingsStored','serverTranscriptionTest']);
+    const remoteHostStatus=await new Promise((resolve,reject)=>{get(origin+'/api/voice/diagnostics',{headers:{Host:'external.example'}},r=>{r.resume();resolve(r.statusCode);}).on('error',reject);});assert.equal(remoteHostStatus,403);
+    assert.equal((await fetch(origin+'/voice-diagnostics',{method:'POST'})).status,405);
+    process.env.RENDER='true';for(const path of paths)assert.equal((await fetch(origin+path)).status,403);
+  }finally{if(oldFlag===undefined)delete process.env.OYACHECK_VOICE_DIAGNOSTICS;else process.env.OYACHECK_VOICE_DIAGNOSTICS=oldFlag;if(oldRender===undefined)delete process.env.RENDER;else process.env.RENDER=oldRender;}
 });
