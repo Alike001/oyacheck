@@ -23,6 +23,7 @@ const PUBLIC_FILES = new Map([
   ['/voice-activity.js', ['voice-activity.js','text/javascript; charset=utf-8']],
   ['/styles.css', ['styles.css','text/css; charset=utf-8']],
   ['/favicon.svg', ['favicon.svg','image/svg+xml']],
+  ['/agent-registration.json', ['agent-registration.json','application/json; charset=utf-8']],
 ]);
 const PORT = Number(process.env.PORT || 4173);
 const RATE = new Map();

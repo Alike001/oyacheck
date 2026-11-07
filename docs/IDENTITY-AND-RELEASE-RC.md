@@ -1,5 +1,10 @@
 # OyaCheck identity and read-only release candidate
 
+Follow-up: [MetaMask registration readiness](METAMASK-REGISTRATION-READINESS.md)
+records the now-confirmed public wallet, finalized ownership checks, the stable
+metadata route and exact unsigned transaction. The draft moved to
+`public/agent-registration.json`. Unknown-wallet statements below are historical.
+
 Verified 2026-11-07 on `fix/ai-reliability-mobile`, starting at
 `79135e80bba4b9ff13a56787dbda146df6b533a5`. Deadline supplied by owner:
 2026-11-09 09:00 GMT. Event code supplied by owner: `celo_03e76ac742c7`.

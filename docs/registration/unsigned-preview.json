@@ -1,0 +1,50 @@
+{
+  "generatedAt": "2026-11-07T14:52:36.636Z",
+  "network": "Celo mainnet",
+  "agentURI": "https://oyacheck-beta.onrender.com/agent-registration.json",
+  "transaction": {
+    "from": "0x9Ceaa6aBFb2bC1aC202f96496Cdc683d86Bc458a",
+    "to": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+    "value": "0x0",
+    "data": "0xf2c298be0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000003a68747470733a2f2f6f7961636865636b2d626574612e6f6e72656e6465722e636f6d2f6167656e742d726567697374726174696f6e2e6a736f6e00000000000063656c6f5f303365373661633734326337110080218021802180218021802180218021",
+    "chainId": "0xa4ec"
+  },
+  "attribution": {
+    "codes": [
+      "celo_03e76ac742c7"
+    ],
+    "schemaId": 0
+  },
+  "audit": {
+    "wallet": "0x9Ceaa6aBFb2bC1aC202f96496Cdc683d86Bc458a",
+    "chainId": 42220,
+    "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+    "block": {
+      "number": "0x4e5abc9",
+      "hash": "0x4dad5fc78c45e3b79456e73c2503b1662131bb2bc06a3f4219f49c533a6cc493",
+      "timestamp": "0x6aef341f"
+    },
+    "currentOwnedCount": "0",
+    "completeForCurrentOwnership": true,
+    "conclusion": "No identities currently owned by this wallet at this finalized snapshot",
+    "receivingWalletOrHistoricalIdentitySearch": "Not covered by ERC-721 balanceOf; do not infer absence",
+    "nativeCELOWei": "0"
+  },
+  "metadata": {
+    "published": false,
+    "url": "https://oyacheck-beta.onrender.com/agent-registration.json",
+    "status": 404,
+    "reason": "Metadata URL is not successful"
+  },
+  "gas": {
+    "estimate": "181050",
+    "priceWei": "202500000000",
+    "indicativeExecutionCostWei": "36662625000000000",
+    "simulationError": null,
+    "feeCurrency": "native CELO (feeCurrency omitted)",
+    "sufficientForIndicativeExecutionCost": false,
+    "limitations": "Time-bound estimate, not a fee cap; refresh in MetaMask. L1 data fee and fee buffer may add cost."
+  },
+  "authorizedToSignOrBroadcast": false,
+  "registrationReady": false
+}

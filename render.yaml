@@ -12,6 +12,8 @@ services:
         value: production
       - key: OYACHECK_READ_ONLY
         value: "1"
+      - key: OYACHECK_AGENT_WALLET
+        value: "0x9Ceaa6aBFb2bC1aC202f96496Cdc683d86Bc458a"
       - key: BUY_BROWSER_SANDBOX
         value: "0"
       - key: OYACHECK_DEMO_BROWSER
