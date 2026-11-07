@@ -1,5 +1,7 @@
 # Build with buy integration and readiness audit
 
+Historical baseline audit. The later [mainnet preparation and release plan](MAINNET-RELEASE-PLAN.md) supersedes its implementation/readiness status; historical sandbox receipts remain valid.
+
 Verified 2026-11-07 on `fix/ai-reliability-mobile`. Deadline:
 **2026-11-09 09:00 GMT**. No financial actions, deployment, push, merge,
 registration or submission were performed during this audit.

@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { mainnetHTTP, mainnetPreparationEnabled } from './lib/mainnet-http.mjs';
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -84,7 +85,11 @@ const server = http.createServer(async (req,res)=>{
   if(origin && origin !== expected && origin !== `http://${req.headers.host}` && origin !== `https://${req.headers.host}`) {
     respond(res,403,{error:'Cross-origin request blocked'});return;
   }
-  if(req.method==='GET' && u.pathname==='/api/health') {respond(res,200,{ok:true,version:'0.10.0',voiceTranscription:keyIsConfigured(),browserSpeechPlayback:'client',browserInspection:false,sourceInspectionSandboxEnabled:sandboxEnabled()&&isLocalRequest(ip),sandboxBudget:budgetStatus(),localBrowserDemo:demoAllowed(ip),localBrowserAvailable:Boolean(chromiumBinary()),aiConfigured: /^gsk_[A-Za-z0-9_-]+$/.test(process.env.GROQ_API_KEY?.trim() || '')});return;}
+  if (u.pathname.startsWith('/api/mainnet/')) {
+    if(!rateAllowed(ip,'mainnet-prepare')) {respond(res,429,{error:'Preparation rate limited'});return;}
+    await mainnetHTTP(req,res,u,{readJSON,respond});return;
+  }
+  if(req.method==='GET' && u.pathname==='/api/health') {respond(res,200,{ok:true,mainnetPreparation:mainnetPreparationEnabled()&&isLocalRequest(ip),version:'0.10.0',voiceTranscription:keyIsConfigured(),browserSpeechPlayback:'client',browserInspection:false,sourceInspectionSandboxEnabled:sandboxEnabled()&&isLocalRequest(ip),sandboxBudget:budgetStatus(),localBrowserDemo:demoAllowed(ip),localBrowserAvailable:Boolean(chromiumBinary()),aiConfigured: /^gsk_[A-Za-z0-9_-]+$/.test(process.env.GROQ_API_KEY?.trim() || '')});return;}
   // Local lab: ONLY fixed synthetic pages served by this app. No paid calls,
   // no external URL input, no real form submission and no remote exposure.
   if(u.pathname.startsWith('/_demo/') || u.pathname.startsWith('/api/demo/')) {

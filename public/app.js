@@ -44,6 +44,14 @@ const voiceMeter = $('#voice-meter');
 const voiceLevel = $('#voice-level');
 const readAloud = $('#read-aloud');
 const autoVoice = $('#auto-voice');
+const mainnetPanel=$('#mainnet-investigation');
+const mainnetQuote=$('#mainnet-quote');
+const mainnetRequest=$('#mainnet-request');
+const mainnetCancel=$('#mainnet-cancel');
+const mainnetRefresh=$('#mainnet-refresh');
+let mainnetEnabled=false;
+let mainnetPurchase=null;
+let mainnetCSRF=null;
 let browserSandboxEnabled = false;
 let pendingQuote = null;
 let quoteExpiresAt = 0;
@@ -131,6 +139,7 @@ function updateEvidence(data) {
   if (buyConfirmDialog.open) buyConfirmDialog.close('cancel');
   demoActive=false;
   report = data;
+  mainnetQuote.disabled=!(mainnetEnabled && (data.evidence||[]).some(e=>e.url.startsWith('https://csirt.ncc.gov.ng/')));
   pendingQuote = null;
   quoteExpiresAt = 0;
   browserOutput.hidden = true;
@@ -234,7 +243,7 @@ $('#new-chat').addEventListener('click',()=>{
   const desc=document.createElement('p');desc.textContent='Paste a link, share a forwarded message, or ask about online safety.';
   welcome.append(icon,kicker,title,desc);chat.append(welcome);
   if (buyConfirmDialog.open) buyConfirmDialog.close('cancel');
-  report=null;lastScanInput=null;demoActive=false;conversation=[];pendingQuote=null;quoteExpiresAt=0;browserInvestigation.hidden=true;input.value='';evidenceResult.hidden=true;evidenceEmpty.hidden=false;evidenceIndicator.textContent='NO CHECK YET';input.focus();
+  mainnetQuote.disabled=true;report=null;lastScanInput=null;demoActive=false;conversation=[];pendingQuote=null;quoteExpiresAt=0;browserInvestigation.hidden=true;input.value='';evidenceResult.hidden=true;evidenceEmpty.hidden=false;evidenceIndicator.textContent='NO CHECK YET';input.focus();
 });
 copyReportButton.addEventListener('click',async()=>{
   if(!report)return;
@@ -258,7 +267,7 @@ demoRun.addEventListener('click',async()=>{
   try{
     const d=await jsonPost('/api/demo/inspect',{scenario:demoScenario.value});
     if(d.kind!=='controlled-browser-demo'||!Array.isArray(d.observations)||d.payment!==null||!d.scope.includes('synthetic'))throw new Error('Unexpected demonstration evidence');
-    demoActive=true;report=null;lastScanInput=null;conversation=[];
+    demoActive=true;mainnetQuote.disabled=true;report=null;lastScanInput=null;conversation=[];
     demoResult.hidden=false;
     const heading=document.createElement('strong');heading.textContent=d.finding;demoResult.append(heading);
     const title=document.createElement('p');title.textContent=`Rendered page: ${d.page.title}`;demoResult.append(title);
@@ -346,6 +355,9 @@ buyDialogApprove.addEventListener('click',async()=>{
 
 fetch('/api/health').then(r=>r.json()).then(health=>{
   browserSandboxEnabled = health.sourceInspectionSandboxEnabled === true;
+  mainnetEnabled=health.mainnetPreparation===true;
+  mainnetPanel.hidden=!mainnetEnabled;
+  if(mainnetEnabled) restoreMainnet();
   demoLab.hidden=health.localBrowserDemo!==true;
   demoShortcut.hidden=health.localBrowserDemo!==true;
   if(health.localBrowserDemo && !health.localBrowserAvailable){demoProgress.textContent='Chromium is not installed. Set CHROMIUM_PATH or install chromium.';demoRun.disabled=true;}
@@ -557,3 +569,74 @@ fetch('/api/health').then(r=>r.json()).then(d=>{
   useGroqSpeech=d.voiceTranscription===true;
   voiceMessage(useGroqSpeech?'Tap Speak once and talk. Silence detection stops recording after about 1.5 seconds; questions auto-send and replies speak aloud. URLs require review.':'Browser speech recognition is available if supported; voice questions auto-send after your browser detects the end of speech.');
 }).catch(()=>voiceMessage('Voice availability could not be checked; typing still works.'));
+
+
+// Preparation only. There is deliberately no browser endpoint that executes a
+// mainnet payment or grants operator spending approval.
+async function mainnetAPI(path, body) {
+  if(!mainnetCSRF) {
+    const response=await fetch('/api/mainnet/session');
+    if(!response.ok)throw new Error('Local mainnet preparation is unavailable.');
+    mainnetCSRF=(await response.json()).csrf;
+  }
+  const response=await fetch(path,body===undefined?{}:{method:'POST',headers:{'content-type':'application/json','x-oyacheck-csrf':mainnetCSRF},body:JSON.stringify(body)});
+  const value=await response.json();
+  if(!response.ok)throw new Error(value.error||'Preparation failed. No automatic payment retry.');
+  return value;
+}
+function renderMainnet(value) {
+  mainnetPurchase=value;
+  localStorage.setItem('oya-mainnet-purchase',value.id);
+  const plan=$('#mainnet-plan');plan.replaceChildren();
+  for(const text of [`Service: ${value.plan.capability} · ${value.plan.durationMinutes} minute`,
+    `Investigation: ${value.plan.host} · official NCC advisory only`,
+    `Chain: ${value.plan.network} (${value.plan.chainId})`,
+    `Quoted price and maximum: ${(value.plan.atomic/1e6).toFixed(6)} ${value.plan.token}`,
+    `Payer: ${value.plan.payer}`,`Recipient: ${value.plan.payTo}`,
+    `Quote expires: ${new Date(value.expires).toISOString()}`,`Plan fingerprint: ${value.fingerprint}`]) {
+    const line=document.createElement('p');line.textContent=text;plan.append(line);
+  }
+  const editable=['quoted','requested'].includes(value.state)&&value.expires>Date.now();
+  mainnetRequest.hidden=!editable||value.state==='requested';
+  mainnetCancel.hidden=!editable;mainnetRefresh.hidden=false;
+  const status={quoted:'Quote ready. Review the exact plan before requesting operator review.',
+    requested:'Awaiting separate operator approval. This browser cannot spend funds.',
+    cancelled:'Request cancelled before execution. Nothing was authorized by this request.',expired:'Quote expired. Request a fresh quote for new review.',
+    executing:'Operator attempt in progress. Do not retry; refresh status or review receipts.',
+    'needs-review':'Payment or service outcome is uncertain. Do not pay again. Operator receipt reconciliation is required.',
+    'verification-required':'Source observations received. Mainnet settlement still requires independent receipt verification.',
+    'settled-unfulfilled':'Payment verified, but source inspection did not complete. Do not repurchase automatically.',
+    complete:'Source observations and payment verified. This does not prove the submitted website safe.'};
+  $('#mainnet-status').textContent=status[value.state]||'Operator review required.';
+  const result=$('#mainnet-result');result.replaceChildren();result.hidden=!value.result&&!value.transaction;
+  if(value.result)for(const text of [value.result.scope,`Final source: ${value.result.finalSourceUrl}`,`Page title: ${value.result.sourceTitle||'Unavailable'}`,
+    `Exact domain mention: ${value.result.foundInLivePage}`,`Observed excerpt: ${value.result.excerpt||'Unavailable'}`,
+    `Source text SHA-256: ${value.result.sourceTextSha256||'Unavailable'}`,`Observed at: ${value.result.checkedAt}`]) {
+    const p=document.createElement('p');p.textContent=text;result.append(p);
+  }
+  if(/^0x[a-fA-F0-9]{64}$/.test(value.transaction||'')) {
+    const link=document.createElement('a');link.href=`https://celoscan.io/tx/${value.transaction}`;
+    link.target='_blank';link.rel='noopener noreferrer';link.textContent='View recorded Celo mainnet transaction';result.append(link);
+  }
+}
+async function restoreMainnet() {
+  const id=localStorage.getItem('oya-mainnet-purchase');if(!id)return;
+  try{renderMainnet(await mainnetAPI(`/api/mainnet/purchases/${id}`));}
+  catch(error){$('#mainnet-status').textContent=error.message+' Existing attempts must not be automatically repeated.';}
+}
+mainnetQuote.addEventListener('click',async()=>{
+  if(!mainnetEnabled||!report||!lastScanInput||isBusy)return;
+  mainnetQuote.disabled=true;
+  let requestId=sessionStorage.getItem('oya-mainnet-request');
+  if(!requestId){requestId=crypto.randomUUID();sessionStorage.setItem('oya-mainnet-request',requestId);}
+  try {renderMainnet(await mainnetAPI('/api/mainnet/quote',{input:lastScanInput,requestId}));sessionStorage.removeItem('oya-mainnet-request');}
+  catch(error){$('#mainnet-status').textContent=error.message;}
+  finally{mainnetQuote.disabled=false;}
+});
+for(const [button,action] of [[mainnetRequest,'request'],[mainnetCancel,'cancel']])button.addEventListener('click',async()=>{
+  if(!mainnetPurchase)return;button.disabled=true;
+  try{renderMainnet(await mainnetAPI(`/api/mainnet/purchases/${mainnetPurchase.id}/${action}`,{fingerprint:mainnetPurchase.fingerprint}));}
+  catch(error){$('#mainnet-status').textContent=error.message;}
+  finally{button.disabled=false;}
+});
+mainnetRefresh.addEventListener('click',restoreMainnet);

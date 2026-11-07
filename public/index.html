@@ -92,6 +92,19 @@
               <div class="report-limits"><strong><span class="limits-icon">ⓘ</span> What we haven't checked</strong><p id="scope-text">No live page inspection.</p></div>
               <button type="button" id="copy-report" class="copy-report">Copy evidence report <span aria-hidden="true">↗</span></button>
             </div>
+            <section id="mainnet-investigation" class="browser-investigation" aria-label="Mainnet source investigation preparation" hidden>
+              <div class="report-overline">MAINNET SOURCE CHECK · OPERATOR REVIEW</div>
+              <p>Prepare a one-minute browser check of the published NCC advisory. The submitted website will not be opened. Requesting review does not authorize or send a payment.</p>
+              <div class="browser-actions">
+                <button id="mainnet-quote" type="button" disabled>Get mainnet quote</button>
+                <button id="mainnet-request" type="button" hidden>Request operator review</button>
+                <button id="mainnet-cancel" type="button" hidden>Cancel request</button>
+                <button id="mainnet-refresh" type="button" hidden>Refresh status</button>
+              </div>
+              <p id="mainnet-status" role="status" aria-live="polite">Check a link with published NCC evidence to prepare an investigation.</p>
+              <div id="mainnet-plan"></div>
+              <div id="mainnet-result" hidden></div>
+            </section>
             <section class="demo-lab" id="demo-lab" aria-label="Local synthetic website investigation" hidden>
               <div class="report-overline">BROWSER EVIDENCE LAB · LOCAL DEMO</div>
               <h3>See what the browser actually finds</h3>

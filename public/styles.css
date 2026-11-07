@@ -100,3 +100,6 @@
 
 /* Keep Send and microphone controls reachable on narrow phones. */
 @media(max-width:510px){.composer-bottom{flex-wrap:wrap}.send-controls{margin-left:auto}}
+
+#mainnet-investigation{margin:18px 23px;overflow-wrap:anywhere;font-size:12px}#mainnet-plan p,#mainnet-result p{margin:8px 0}#mainnet-result{border-top:1px solid #c4d7ca;padding-top:10px}
+@media(max-width:510px){#mainnet-investigation{margin:12px 14px}}

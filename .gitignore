@@ -5,3 +5,9 @@ node_modules/
 .DS_Store
 *.log
 coverage/
+
+# Purchase ledger and local operational artifacts are never source files.
+.oyacheck/
+*.sqlite
+*.sqlite-*
+.playwright-mcp/

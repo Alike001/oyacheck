@@ -14,3 +14,7 @@ services:
         value: "0"
       - key: OYACHECK_DEMO_BROWSER
         value: "0"
+      - key: OYACHECK_MAINNET_PREPARE
+        value: "0"
+      - key: OYACHECK_MAINNET_EXECUTE
+        value: "0"

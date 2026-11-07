@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, chmod, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -110,6 +111,8 @@ test('one consented mock purchase opens only the advisory; replay cannot charge 
   assert.equal(calls.length, 1); assert.equal(calls[0].url, 'https://gateway.usebuy.ai/v1/catalog');
   assert.equal(result.transaction, transaction); assert.equal(result.chainId, 11142220);
   assert.equal(result.explorerUrl, `https://celo-sepolia.blockscout.com/tx/${transaction}`);
+  assert.match(result.excerpt, /secure-verifymydevice\.ng/);
+  assert.equal(result.sourceTextSha256, createHash('sha256').update(result.textSnapshot).digest('hex'));
   assert.equal(result.foundInLivePage, 'yes'); assert.equal(result.approvedMaxTestUSDC, q.amount);
   assert.match(result.scope, /suspicious website was NOT opened/);
   assert.doesNotMatch(JSON.stringify(result), /FAKE_SESSION_SECRET|commandUrl|accessToken/);
