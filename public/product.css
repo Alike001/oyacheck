@@ -14,3 +14,5 @@
 .panel-header{height:auto;min-height:74px}.noscript-note{margin:20px;padding:20px;background:#f3e6ce;color:#483c2a}.footer nav a{min-height:44px;display:inline-flex;align-items:center}
 @media(max-width:780px){.workspace-grid:has(#evidence-result:not([hidden])) .evidence-panel{grid-row:1}.reason-list li{font-size:14px;line-height:1.65}.evidence-content#evidence-empty{padding:30px 22px}}
 .main-nav a{display:inline-flex;align-items:center;min-height:44px}
+/* Acceptance fixes: keep bullets clear of finding text and meet text contrast. */
+.reason-list li{padding-left:20px}.evidence-content#evidence-empty p{color:#536875;font-size:14px}

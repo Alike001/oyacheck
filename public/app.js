@@ -246,7 +246,7 @@ function showView(focus=false) {
   if(!app){stopSpeech();voiceEpoch++;if(recordState){discardRecording=true;try{if(recorder?.state==='recording')recorder.stop();}catch{}cleanupAudio();}}
   for(const a of document.querySelectorAll('.nav-app')){if(app)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}
   document.title=app?'OyaCheck — Link and message checker':'OyaCheck — Check a link before you trust it';
-  if(focus){if(app)input.focus({preventScroll:true});else if(location.hash){const target=document.getElementById(location.hash.slice(1));if(target){target.setAttribute('tabindex','-1');target.focus({preventScroll:true});target.scrollIntoView();}}else {scrollTo(0,0);$('#intro-title').setAttribute('tabindex','-1');$('#intro-title').focus({preventScroll:true});}}
+  if(focus){if(app){input.focus({preventScroll:true});input.scrollIntoView({block:'center',behavior:'instant'});}else if(location.hash){const target=document.getElementById(location.hash.slice(1));if(target){target.setAttribute('tabindex','-1');target.focus({preventScroll:true});target.scrollIntoView();}}else {scrollTo(0,0);$('#intro-title').setAttribute('tabindex','-1');$('#intro-title').focus({preventScroll:true});}}
 }
 function navigate(path) {if(path!==location.pathname+location.hash)history.pushState(null,'',path);showView(true);}
 document.addEventListener('click',event=>{

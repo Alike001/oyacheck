@@ -25,6 +25,12 @@ export async function verifyProductBrowser(page,origin,artifacts){
     await page.setViewportSize({width,height:900});await page.goto(origin+'/');
     check(await page.locator('#home-view').isVisible(),'Landing unavailable');let size=await fit();check(size.documentWidth<=width,`Landing overflow at ${width}`);
     if(width===390||width===1440)await page.screenshot({path:`${artifacts}/landing-${width}.png`,fullPage:true});
+    // A lower-page CTA must reveal the focused composer, even after deep scrolling.
+    await page.locator('#landing-input').fill('https://example.org/draft');
+    await page.locator('#faq .inline-link').click();
+    check(await page.locator('#message-input').evaluate(e=>{const r=e.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}),`FAQ CTA left input off-screen at ${width}`);
+    await page.goBack();await page.waitForFunction(()=>!document.querySelector('#home-view').hidden);
+    check(await page.locator('#landing-input').inputValue()==='https://example.org/draft','CTA navigation lost landing draft');
     await page.locator('#landing-input').fill('https://paypal.com.evil.example/login');await page.locator('.landing-submit').click();
     await page.waitForFunction(()=>document.querySelector('#finding-host').textContent==='paypal.com.evil.example'&&!document.querySelector('#send-button').disabled);
     check(new URL(page.url()).pathname==='/app'&&!new URL(page.url()).search,'Private navigation URL');
@@ -37,7 +43,7 @@ export async function verifyProductBrowser(page,origin,artifacts){
     const before=scans;await page.goBack();await page.waitForFunction(()=>!document.querySelector('#home-view').hidden);await page.goForward();await page.waitForFunction(()=>!document.querySelector('#app-view').hidden);
     check(scans===before,'History triggered analysis again');check(await page.locator('#finding-host').textContent()==='paypal.com.evil.example','History lost result');
     await page.locator('#new-check').click();check(await page.locator('#message-input').inputValue()==='','New check not cleared');
-    results.push({width,landingFits:true,resultFits:true,realAnalysis:true,historyPreserved:true,anotherCheck:true});
+    results.push({width,landingFits:true,resultFits:true,realAnalysis:true,historyPreserved:true,anotherCheck:true,lowerPageCTA:true,landingDraftPreserved:true});
   }
   await page.goto(origin+'/');await page.locator('[data-landing-mode="message"]').click();await page.locator('#landing-input').fill('Lunch is at noon. See you there.');await page.locator('.landing-submit').click();await page.waitForFunction(()=>document.querySelector('#finding-title').textContent==='No obvious warning signs');
   await page.goto(origin+'/app');check(await page.locator('#app-view').isVisible(),'Direct app route unavailable');
