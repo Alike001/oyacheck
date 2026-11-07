@@ -1,5 +1,9 @@
 # Final human-controlled ERC-8004 registration checkpoint
 
+Historical locked checkpoint. The owner subsequently authorized one exact
+human-triggered request; see [current execution authorization](REGISTRATION-EXECUTION-AUTHORIZATION.md).
+The locked-state instructions below describe the earlier checkpoint.
+
 Local URL: **http://127.0.0.1:4188/**. Start with `npm run registration:review`
 (or `NODE_USE_ENV_PROXY=1 npm run registration:review` in this Node 24 proxy
 environment). The dedicated server binds only to loopback. Nothing in this

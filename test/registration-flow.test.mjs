@@ -93,7 +93,7 @@ test('future unlocked mock server rechecks identity before claiming',async t=>{
 test('a changed fresh fee cap requires new review and cannot reserve or submit',async t=>{
   const f=await fixture(t);let changed=false;
   const server=createReviewServer({attempts:f.journal,sendingEnabled:true,load:async()=>fresh(),refresh:async()=>{
-    const p=fresh();if(changed){const b=p.gas.feeBudget;b.maxFeePerGasWei=(BigInt(b.maxFeePerGasWei)+1n).toString();p.preparedRequest.maxFeePerGas='0x'+BigInt(b.maxFeePerGasWei).toString(16);b.recommendedReserveWei=(BigInt(b.gasLimit)*BigInt(b.maxFeePerGasWei)+BigInt(b.l1FeeUpperBoundWei)+BigInt(b.operatorFeeWei)).toString();}return p;
+    const p=fresh();if(changed){const b=p.gas.feeBudget;b.maxFeePerGasWei=(BigInt(b.maxFeePerGasWei)-1n).toString();p.preparedRequest.maxFeePerGas='0x'+BigInt(b.maxFeePerGasWei).toString(16);b.recommendedReserveWei=(BigInt(b.gasLimit)*BigInt(b.maxFeePerGasWei)+BigInt(b.l1FeeUpperBoundWei)+BigInt(b.operatorFeeWei)).toString();}return p;
   }});
   server.listen(0,'127.0.0.1');await once(server,'listening');t.after(()=>new Promise(resolve=>server.close(resolve)));
   const origin=`http://127.0.0.1:${server.address().port}`,policy=await(await fetch(origin+'/policy')).json();
@@ -102,4 +102,38 @@ test('a changed fresh fee cap requires new review and cannot reserve or submit',
   const plan=await(await fetch(origin+'/final-review',{method:'POST',headers,body:JSON.stringify({reviewed:true})})).json();changed=true;
   const response=await fetch(origin+'/claim',{method:'POST',headers,body:JSON.stringify({id:plan.id,fingerprint:plan.fingerprint,finalReviewed:true})});
   assert.equal(response.status,409);assert.equal(f.journal.status().reserved,false);assert.equal(f.sends(),0);
+});
+
+test('owner total-gas ceiling rejects even one wei above approval before a request',async t=>{
+  const f=await fixture(t),p=fresh();p.gas.feeBudget.l1FeeUpperBoundWei='1';p.gas.feeBudget.recommendedReserveWei=(BigInt(p.gas.feeBudget.recommendedReserveWei)+1n).toString();
+  assert.throws(()=>validateFinal(p,expected),{code:'approval-ceiling'});f.flow.prepare=async()=>({...await f.plan(),preview:p});
+  await assert.rejects(f.flow.finalReview(true),/owner-approved/);assert.equal(f.sends(),0);assert.equal(f.journal.status().reserved,false);
+});
+test('pinned owner fingerprint rejects changed fee fields even below the approved ceiling',async t=>{
+  const f=await fixture(t);f.flow.approvedFingerprint=await fingerprint(saved.preparedRequest);
+  f.flow.prepare=async()=>{const p=fresh(),b=p.gas.feeBudget;b.maxFeePerGasWei=(BigInt(b.maxFeePerGasWei)-1n).toString();p.preparedRequest.maxFeePerGas='0x'+BigInt(b.maxFeePerGasWei).toString(16);b.recommendedReserveWei=(BigInt(b.gasLimit)*BigInt(b.maxFeePerGasWei)).toString();return {id:'changed',preview:p,fingerprint:await fingerprint(p.preparedRequest)};};
+  await assert.rejects(f.flow.finalReview(true),/renewed owner approval/);assert.equal(f.sends(),0);assert.equal(f.journal.status().reserved,false);
+});
+
+test('ambiguous claim response cannot open a wallet confirmation',async t=>{
+  const f=await fixture(t);f.flow.claim=async()=>({reserved:false});const plan=await f.flow.finalReview(true);
+  await assert.rejects(f.flow.submit(true,plan.fingerprint),/Reservation response is ambiguous/);assert.equal(f.sends(),0);
+  await assert.rejects(f.flow.submit(true,plan.fingerprint));assert.equal(f.sends(),0);
+});
+test('server pins the owner request and rejects material changes below the fee ceiling',async t=>{
+  const f=await fixture(t);const approvedFingerprint=await fingerprint(saved.preparedRequest);
+  const server=createReviewServer({attempts:f.journal,sendingEnabled:true,approvedFingerprint,load:async()=>fresh(),refresh:async()=>{
+    const p=fresh(),b=p.gas.feeBudget;b.maxFeePerGasWei=(BigInt(b.maxFeePerGasWei)-1n).toString();p.preparedRequest.maxFeePerGas='0x'+BigInt(b.maxFeePerGasWei).toString(16);b.recommendedReserveWei=(BigInt(b.gasLimit)*BigInt(b.maxFeePerGasWei)).toString();return p;
+  }});
+  server.listen(0,'127.0.0.1');await once(server,'listening');t.after(()=>new Promise(resolve=>server.close(resolve)));
+  const origin=`http://127.0.0.1:${server.address().port}`,policy=await(await fetch(origin+'/policy')).json();
+  const response=await fetch(origin+'/final-review',{method:'POST',headers:{'content-type':'application/json',origin,'x-oyacheck-review':policy.csrf},body:JSON.stringify({reviewed:true})});
+  assert.equal(response.status,409);assert.match((await response.json()).error,/renewed owner approval/);assert.equal(f.journal.status().reserved,false);
+});
+
+test('a review that expires while claiming cannot request MetaMask and stays reserved',async t=>{
+  const f=await fixture(t),plan=await f.flow.finalReview(true),claim=f.flow.claim;
+  f.flow.claim=async body=>{const result=await claim(body);f.flow.final={...plan,preview:{...plan.preview,generatedAt:new Date(Date.now()-61000).toISOString()}};return result;};
+  await assert.rejects(f.flow.submit(true,plan.fingerprint),/Fresh successful/);
+  assert.equal(f.sends(),0);assert.equal(f.journal.status().reserved,true);
 });

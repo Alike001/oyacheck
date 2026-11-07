@@ -16,7 +16,7 @@ function fixture(overrides = {}) {
     data:AbiParameters.encode(AbiParameters.from('string'),[AGENT_URI])};
   const mint = {address:IDENTITY_REGISTRY,...AbiEvent.encode(TRANSFER,{from:'0x'+'0'.repeat(40),to:OWNER_AGENT_WALLET,tokenId:7n}),data:'0x'};
   const transaction = {...registrationTransaction(),hash,blockHash,input:registrationTransaction().data};
-  const receipt = {status:'0x1',transactionHash:hash,blockNumber:block.number,blockHash,
+  const receipt = {status:'0x1',gasUsed:'0x2',effectiveGasPrice:'0x3',l1Fee:'0x0',transactionHash:hash,blockNumber:block.number,blockHash,
     from:OWNER_AGENT_WALLET,to:IDENTITY_REGISTRY,logs:[log,mint]};
   const calls = [];
   const rpc = async (method,params) => {
@@ -158,4 +158,13 @@ test('recovered final transaction must preserve the reviewed gas and fee caps',a
   const f=fixture(),request={...registrationTransaction(),gas:'0x350ac',maxFeePerGas:'0x5db6de9900',maxPriorityFeePerGas:'0x9502f900'};
   Object.assign(f.transaction,request);assert.equal((await registrationReceiptStatus(f.rpc,hash,request)).state,'verified');
   f.transaction.maxFeePerGas='0x1';await assert.rejects(registrationReceiptStatus(f.rpc,hash,request),/gas\/fee fields differ/);
+});
+
+test('genuine receipt checks require fee evidence and reject a settled total above approval',async()=>{
+  const f=fixture(),request={...registrationTransaction(),gas:'0x350ac',maxFeePerGas:'0x5db6de9900',maxPriorityFeePerGas:'0x9502f900'};
+  Object.assign(f.transaction,request);const result=await registrationReceiptStatus(f.rpc,hash,request);
+  assert.equal(result.evidence.fees.totalGasCostWei,'6');assert.equal(result.evidence.fees.withinApprovedCeiling,true);assert.equal(result.explorerUrl,`https://celoscan.io/tx/${hash}`);
+  f.transaction.feeCurrency='0x'+'1'.repeat(40);await assert.rejects(registrationReceiptStatus(f.rpc,hash,request),/Fee currency differs/);delete f.transaction.feeCurrency;
+  delete f.receipt.l1Fee;await assert.rejects(registrationReceiptStatus(f.rpc,hash,request),/lacks L1 fee evidence/);
+  f.receipt.l1Fee='0x'+(87447150000000000n+1n).toString(16);await assert.rejects(registrationReceiptStatus(f.rpc,hash,request),/exceeds approval/);
 });

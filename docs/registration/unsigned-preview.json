@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-07T16:14:17.023Z",
+  "generatedAt": "2026-11-07T17:23:24.567Z",
   "network": "Celo mainnet",
   "agentURI": "https://oyacheck-beta.onrender.com/agent-registration.json",
   "transaction": {
@@ -30,18 +30,18 @@
     "chainId": 42220,
     "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
     "block": {
-      "number": "0x4e5c067",
-      "hash": "0x2e079893b2efe97c3dbdc3d55392c2b1c9fc1a444c9f35730a475789e658a5e2",
-      "timestamp": "0x6aef48bd"
+      "number": "0x4e5d0e7",
+      "hash": "0xd6eb0b92f53d0c5f89f8b9691846d43ed6ed1a2e1745b9cee5749e59a02424cd",
+      "timestamp": "0x6aef593d"
     },
     "currentOwnedCount": "0",
     "completeForCurrentOwnership": true,
     "conclusion": "No identities currently owned by this wallet at this finalized snapshot",
     "receivingWalletOrHistoricalIdentitySearch": "Not covered by ERC-721 balanceOf; do not infer absence",
-    "nativeCELOWei": "0",
+    "nativeCELOWei": "360000000000000000",
     "latest": {
-      "block": "0x4e5c5fe",
-      "blockHash": "0xfac23688f13b17586d5fc2e8338bd6670855d12683c3b47689998e82d8758cbd",
+      "block": "0x4e5d632",
+      "blockHash": "0x66800052d3bef02bd2720e78236358a3a6235f9c05f54d0f0854dbc6b1df42ca",
       "currentOwnedCount": "0",
       "nativeCELOWei": "360000000000000000"
     }
@@ -64,8 +64,8 @@
     "feeCurrency": "native CELO (feeCurrency omitted)",
     "sufficientForIndicativeExecutionCost": true,
     "feeBudget": {
-      "block": "0x4e5c5fe",
-      "blockHash": "0xfac23688f13b17586d5fc2e8338bd6670855d12683c3b47689998e82d8758cbd",
+      "block": "0x4e5d632",
+      "blockHash": "0x66800052d3bef02bd2720e78236358a3a6235f9c05f54d0f0854dbc6b1df42ca",
       "baseFeePerGasWei": "200000000000",
       "maxPriorityFeePerGasWei": "2500000000",
       "maxFeePerGasWei": "402500000000",

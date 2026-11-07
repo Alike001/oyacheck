@@ -1,5 +1,5 @@
 import { RegistrationFlow, pollRegistration } from './registration-flow.js';
-// Account diagnostics are read-only. The existing transaction controller stays locked.
+// Account diagnostics are read-only. A transaction requires the owner's final click.
 export const APPROVED_WALLET = '0x9Ceaa6aBFb2bC1aC202f96496Cdc683d86Bc458a';
 export function previewProblem(preview, now = Date.now()) {
   const age=now-Date.parse(preview?.generatedAt);
@@ -61,10 +61,11 @@ if (typeof document !== 'undefined') {
     $('provider').disabled=busy||!policy;$('reviewed').disabled=busy||!policy||recovery.reserved;
     $('refresh').disabled=busy;$('recheck-wallet').disabled=busy||!selected||!policy;
     $('prepare-final').disabled=busy||recovery.reserved||!connected||!$('reviewed').checked||Boolean(problem)||preview?.registrationReady!==true;
-    $('submit').disabled=busy||!policy?.sendingEnabled||!flow?.final||!$('final-reviewed').checked||Date.now()-Date.parse(flow.final.preview.generatedAt)>60_000;
+    $('submit').disabled=busy||recovery.reserved||!policy?.sendingEnabled||!flow?.final||!$('final-reviewed').checked||Date.now()-Date.parse(flow.final.preview.generatedAt)>60_000;
     $('submit').textContent=policy?.sendingEnabled?'Request one MetaMask confirmation':'Request one MetaMask confirmation · locked';
     $('attach-hash').disabled=busy||!recovery.reserved||Boolean(recovery.hash);$('receipt').disabled=busy||!recovery.hash;
-    $('status').textContent=busy?operation:(loadError||problem||(preview?.registrationReady?'Read-only checks passed. Sending is still locked at this checkpoint.':'Account review is available. Stage 2 requires successful fee checks and sufficient balance.'));
+    $('execution-policy').textContent=recovery.reserved?'One attempt is reserved. No additional request is authorized. Use read-only recovery.':policy?.sendingEnabled?'One owner-authorized MetaMask request, maximum total gas cost 0.08744715 CELO. Both reviews and a final button click are required; no automatic request or retry.':'Sending is locked. Review can proceed without any transaction popup.';
+    $('status').textContent=busy?operation:(loadError||problem||(preview?.registrationReady?(policy?.sendingEnabled?'Read-only checks passed. Review both stages before requesting one MetaMask confirmation.':'Read-only checks passed. Sending is still locked at this checkpoint.'):'Account review is available. Stage 2 requires successful fee checks and sufficient balance.'));
     $('wallet').textContent=connected?`Stage 1 verified: ${APPROVED_WALLET} on Celo 42220. No signature requested.`:wallet.message;
     let help;
     if(busy)help=operation;
@@ -162,7 +163,7 @@ if (typeof document !== 'undefined') {
       const result=await connectForReview(provider,checkedPreview,$('reviewed').checked);
       if(provider!==selected||version!==epoch||checkedPreview!==preview)throw new Error('Wallet context changed during the check. Review and check the account again.');
       wallet={chain:'0xa4ec',accounts:[result.wallet],code:'ready',message:'Approved MetaMask account available.'};connected=true;
-      flow=new RegistrationFlow({provider,expected:policy.expected,enabled:policy.sendingEnabled,
+      flow=new RegistrationFlow({provider,expected:policy.expected,enabled:policy.sendingEnabled,approvedFingerprint:policy.approvedRequestFingerprint,
         prepare:()=>api('/final-review',{reviewed:true}),claim:body=>api('/claim',{...body,finalReviewed:true}),attach:body=>api('/attach-hash',body),recover:()=>api('/attempt')});
     }catch(error){
       connected=false;clearFinal();$('reviewed').checked=false;
@@ -181,8 +182,8 @@ if (typeof document !== 'undefined') {
       if(version!==epoch||provider!==selected)throw new Error('Wallet changed during final review. Repeat Stage 1.');
       preview=plan.preview;render();
       $('calldata-fingerprint').textContent=plan.calldataFingerprint;$('plan-fingerprint').textContent=plan.fingerprint;
-      $('final-stage').hidden=false;$('send-policy').textContent=policy.sendingEnabled?'Future one-use submission enabled by operator approval. Review the exact request again.':'SENDING LOCKED AT THIS CHECKPOINT. No wallet signing request can be made.';
-    }catch(error){clearFinal();loadError=error.message+' Refresh or recheck the wallet, then repeat review.';}
+      $('final-stage').hidden=false;$('send-policy').textContent=policy.sendingEnabled?'One request authorized, at most 0.08744715 CELO gas cost. Confirm the exact request below; no retry is authorized.':'SENDING LOCKED AT THIS CHECKPOINT. No wallet signing request can be made.';
+    }catch(error){clearFinal();loadError=error.message.includes('renewed owner approval')?error.message:error.message+' Refresh or recheck the wallet, then repeat review.';}
     finally{busy=false;update();}
   });
   $('final-reviewed').addEventListener('change',update);
@@ -192,7 +193,8 @@ if (typeof document !== 'undefined') {
     update();
   }
   async function checkReceipt(){busy=true;update();try{const result=await pollRegistration(()=>api('/verify'));$('recovery-status').textContent=JSON.stringify(result,null,2);}catch(error){$('recovery-status').textContent='Recovery uncertain: '+error.message+'. Do not resubmit.';}finally{busy=false;update();}}
-  $('submit').addEventListener('click',async()=>{
+  $('submit').addEventListener('click',async event=>{
+    if(!event.isTrusted||$('submit').disabled)return;
     busy=true;update();
     try{await flow.submit($('final-reviewed').checked,flow.final?.fingerprint);await recover();await checkReceipt();}
     catch(error){$('status').textContent=error.message;try{await recover();}catch{$('status').textContent+=' Recovery unavailable; do not resubmit.';}}

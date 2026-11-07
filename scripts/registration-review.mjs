@@ -1,5 +1,5 @@
-// Dedicated loopback review server. Backend never signs. Claim is hard locked
-// at this checkpoint; the future browser sender requires a durable claim.
+// Dedicated loopback review server. Backend never signs. The only authorized
+// browser request requires two reviews, a matching fingerprint and durable claim.
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -7,13 +7,14 @@ import { resolve } from 'node:path';
 import { readOnlyRPC, registrationPreview, registrationTransaction, registrationReceiptStatus } from '../lib/agent-registration.mjs';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { RegistrationAttempt } from '../lib/registration-attempt.mjs';
-import { fingerprint, validateFinal } from '../local/registration-flow.js';
+import { fingerprint, validateFinal, APPROVED_MAX_TOTAL_GAS_WEI, APPROVED_REQUEST_FINGERPRINT } from '../local/registration-flow.js';
 import { financialActionsBlocked } from '../lib/release-policy.mjs';
 const readJSON = async path => JSON.parse(await readFile(new URL(path,import.meta.url),'utf8'));
+const attemptPath=fileURLToPath(new URL('../.oyacheck/registration-attempt.json',import.meta.url));
 const assets = new Map([['/',['registration-review.html','text/html']],['/review.js',['registration-review.js','text/javascript']],['/review.css',['registration-review.css','text/css']],['/registration-flow.js',['registration-flow.js','text/javascript']]]);
 export function createReviewServer({load=()=>readJSON('../docs/registration/unsigned-preview.json'),
   refresh=async()=>registrationPreview(readOnlyRPC(),await readJSON('../public/agent-registration.json')),
-  sendingEnabled=false, attempts=new RegistrationAttempt(resolve('.oyacheck/registration-attempt.json')),
+  sendingEnabled=false, approvedFingerprint=null, attempts=new RegistrationAttempt(attemptPath),
   verify=(hash,request)=>registrationReceiptStatus(readOnlyRPC(),hash,request)}={}) {
   let cached,refreshing=false,lastRefresh=0,finalPlan;
   const csrf=randomBytes(32).toString('hex'),enabled=sendingEnabled&&!financialActionsBlocked();
@@ -40,6 +41,7 @@ export function createReviewServer({load=()=>readJSON('../docs/registration/unsi
           try{
             finalPlan=null;cached=await refresh();validateFinal(cached,expectedTransaction);
             finalPlan={id:randomUUID(),preview:cached,fingerprint:await fingerprint(cached.preparedRequest),calldataFingerprint:await fingerprint(cached.preparedRequest.data,true)};
+            if(approvedFingerprint&&finalPlan.fingerprint!==approvedFingerprint){finalPlan=null;return reply(409,{error:'Request changed. Stop for renewed owner approval.'});}
             return reply(200,finalPlan);
           }finally{refreshing=false;}
         }
@@ -47,13 +49,13 @@ export function createReviewServer({load=()=>readJSON('../docs/registration/unsi
         validateFinal(finalPlan.preview,expectedTransaction);refreshing=true;
         try{
           const fresh=await refresh();validateFinal(fresh,expectedTransaction);
-          if(await fingerprint(fresh.preparedRequest)!==finalPlan.fingerprint){finalPlan=null;return reply(409,{error:'Fees or transaction changed; repeat both reviews'});}
+          if(await fingerprint(fresh.preparedRequest)!==finalPlan.fingerprint){finalPlan=null;return reply(409,{error:'Fees or transaction changed. Stop for renewed owner approval.'});}
           validateFinal(finalPlan.preview,expectedTransaction);
           const claimed=attempts.claim(finalPlan);finalPlan=null;return reply(200,claimed);
         }finally{refreshing=false;}
       }
       if(req.method!=='GET')return reply(405,{error:'No such review operation'});
-      if(path==='/policy')return reply(200,{sendingEnabled:enabled,csrf,expected:expectedTransaction});
+      if(path==='/policy')return reply(200,{sendingEnabled:enabled&&!attempts.status().reserved,csrf,expected:expectedTransaction,approvedRequestFingerprint:approvedFingerprint,maxTotalGasCostWei:APPROVED_MAX_TOTAL_GAS_WEI.toString()});
       if(path==='/attempt')return reply(200,attempts.status());
       if(path==='/verify'){
         const state=attempts.status();if(!state.hash)return reply(409,{state:'needs-review',error:'Recover the original public hash from MetaMask Activity; never resubmit'});
@@ -67,11 +69,22 @@ export function createReviewServer({load=()=>readJSON('../docs/registration/unsi
         try{cached=await refresh();return reply(200,cached);}finally{refreshing=false;}
       }
       reply(404,{error:'No signing, execution or other operation exists'});
-    }catch{cached=null;finalPlan=null;reply(503,{state:'needs-review',error:'Review or recovery check failed safely; do not resubmit'});}
+    }catch(error){cached=null;finalPlan=null;reply(503,{state:'needs-review',error:error.code==='approval-ceiling'?error.message:'Review or recovery check failed safely; do not resubmit'});}
   });
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
-  // CHECKPOINT LOCK: no environment variable enables sending. A separately
-  // approved local code change is required after exact human transaction review.
-  const server=createReviewServer({sendingEnabled:false});server.listen(4188,'127.0.0.1',()=>console.log('OyaCheck registration review: http://127.0.0.1:4188 · no signing or broadcasting'));
+  try{
+    const attempts=new RegistrationAttempt(attemptPath),reserved=attempts.status().reserved;
+    if(financialActionsBlocked())throw new Error('Registration execution is local-only and blocked in this environment');
+    let snapshot;
+    if(!reserved){
+      snapshot=await registrationPreview(readOnlyRPC(),await readJSON('../public/agent-registration.json'));
+      validateFinal(snapshot,registrationTransaction());
+      if(await fingerprint(snapshot.preparedRequest)!==APPROVED_REQUEST_FINGERPRINT)throw new Error('Request changed. Stop for renewed owner approval.');
+    }
+    // Owner authorization permits one exact human-clicked confirmation request.
+    // A reserved attempt starts recovery-only; no reset or retry is exposed.
+    const server=createReviewServer({sendingEnabled:!reserved,approvedFingerprint:APPROVED_REQUEST_FINGERPRINT,attempts,...(snapshot?{load:async()=>snapshot}:{})});
+    server.listen(4188,'127.0.0.1',()=>console.log(`OyaCheck registration: http://127.0.0.1:4188 · ${reserved?'recovery only':'one human-triggered request authorized; no automatic signing'}`));
+  }catch(error){console.error(error.message);process.exitCode=1;}
 }
