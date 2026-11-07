@@ -68,7 +68,11 @@ async function jsonPost(path, body) {
     body: JSON.stringify(body),
   });
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(payload.error || (response.status === 429 ? 'Too many requests. Try again shortly.' : 'Could not complete this request.'));
+  if (!response.ok) {
+    const error = new Error(payload.error || (response.status === 429 ? 'Too many requests. Try again shortly.' : 'Could not complete this request.'));
+    if (typeof payload.transaction === 'string' && /^0x[a-fA-F0-9]{64}$/.test(payload.transaction)) error.transaction = payload.transaction;
+    throw error;
+  }
   return payload;
 }
 function setBusy(busy) {
@@ -94,6 +98,8 @@ function message(role, text, method = '', extra = null) {
   const byline = document.createElement('span'); byline.className = 'message-meta';
   byline.textContent = role === 'user' ? 'YOU' :
     method === 'groq' ? 'LIVE AI · GROQ' :
+    method === 'source-inspection' ? 'PAID SOURCE CHECK · CELO SEPOLIA' :
+    method === 'demo' ? 'LOCAL CHROMIUM · SYNTHETIC DEMO' :
     method === 'local-guard' ? 'PRIVACY CHECK' :
     method === 'status' ? 'CHECKING' :
     method === 'error' ? 'REQUEST ERROR' : 'OFFLINE GUIDANCE · NOT AI';
@@ -259,6 +265,7 @@ demoRun.addEventListener('click',async()=>{
     const url=document.createElement('p');url.textContent=`Final sample URL: ${d.page.finalUrl}`;demoResult.append(url);
     for(const line of d.observations){const para=document.createElement('p');para.textContent='• '+line;demoResult.append(para);}
     const scope=document.createElement('p');scope.className='demo-scope';scope.textContent=d.scope;demoResult.append(scope);
+    appendSandboxReceipt(d.transaction);
     if(d.screenshotId){const img=document.createElement('img');img.alt='Screenshot of the controlled synthetic training page rendered in local Chromium';img.loading='lazy';img.src='/api/demo/screenshot/'+d.screenshotId;demoResult.append(img);}
     demoProgress.textContent='Synthetic page inspected; no form submitted and no payment made.';
     message('assistant',`I inspected a controlled training page in local Chromium. ${d.observations.join(' ')} This is browser-observed test evidence, not a verdict about a public website. Ask me about these findings.`, 'demo');
@@ -270,6 +277,7 @@ demoRun.addEventListener('click',async()=>{
 // can be opened on demand and ONLY with an explicitly confirmed sandbox purchase.
 quoteSource.addEventListener('click',async()=>{
   if(!report || !browserSandboxEnabled || isBusy)return;
+  pendingQuote=null;quoteExpiresAt=0;inspectSource.hidden=true;
   quoteSource.disabled=true;browserProgress.textContent='Requesting a free price quote…';
   try {
     const q=await jsonPost('/api/buy/quote',{});
@@ -282,6 +290,14 @@ quoteSource.addEventListener('click',async()=>{
   }catch(e){browserProgress.textContent=`Quote unavailable: ${e.message}`;}
   finally{quoteSource.disabled=false;}
 });
+function appendSandboxReceipt(transaction) {
+  if (typeof transaction !== 'string' || !/^0x[a-fA-F0-9]{64}$/.test(transaction)) return;
+  const link=document.createElement('a');
+  link.href=`https://celo-sepolia.blockscout.com/tx/${transaction}`;
+  link.target='_blank';link.rel='noopener noreferrer';
+  link.textContent='View Celo Sepolia transaction (testnet)';
+  browserOutput.append(link);browserOutput.hidden=false;
+}
 // A native <dialog> gives us in-app styling, focus management and Escape-to-cancel.
 // No network call or payment happens when the approval dialog opens.
 function closeBuyDialog() {
@@ -312,17 +328,19 @@ buyDialogApprove.addEventListener('click',async()=>{
   }
   closeBuyDialog();
   pendingQuote=null;quoteExpiresAt=0;inspectSource.hidden=true;quoteSource.disabled=true;setBusy(true);
+  browserOutput.replaceChildren();browserOutput.hidden=true;
   browserProgress.textContent='Sandbox payment and remote official-source inspection in progress. This can take a minute…';
   try{
     const d=await jsonPost('/api/buy/inspect',{input:lastScanInput,quoteToken:q.quoteToken,confirmation:'approve-sandbox-test-usdc'});
     browserOutput.replaceChildren();browserOutput.hidden=false;
-    const items=[`Official source opened: ${d.finalSourceUrl}`,`Page title: ${d.sourceTitle||'Not returned'}`,`Published source text mentions examined domain: ${d.foundInLivePage}`,`Sandbox cost: ${d.costTestUSDC} test USDC`,`Gateway transaction: ${d.transaction||'See sandbox receipts'}`,`Checked: ${d.checkedAt}`,d.scope];
+    const items=[`Official source opened: ${d.finalSourceUrl}`,`Page title: ${d.sourceTitle||'Not returned'}`,`Published source text mentions examined domain: ${d.foundInLivePage}`,`Quoted sandbox price / approved maximum: ${d.approvedMaxTestUSDC} test USDC; verify settled cost in receipts`,`Gateway transaction: ${d.transaction||'See sandbox receipts'}`,`Checked: ${d.checkedAt}`,d.scope];
     for(const line of items){const el=document.createElement('p');el.textContent=line;browserOutput.append(el);}
+    appendSandboxReceipt(d.transaction);
     if(d.screenshotId){const img=document.createElement('img');img.alt='Screenshot of the official NCC advisory opened in the rented browser';img.loading='lazy';img.src=`/api/buy/screenshot/${d.screenshotId}`;browserOutput.append(img);}
     browserProgress.textContent='Official source inspection finished (sandbox only). The suspicious link was not opened.';
     scopeText.textContent='The trusted NCC advisory was opened in an isolated sandbox browser. The submitted suspicious link was not opened; its redirects, credential forms, TLS and reputation remain unchecked.';
     message('assistant',`I used a paid Celo Sepolia sandbox browser to inspect the official NCC advisory. ${d.foundInLivePage==='yes'?'The rendered source text includes the examined domain.':'I could not confirm an exact domain mention from the extracted page text.'} The submitted suspicious site was never opened. See the evidence desk for the transaction and source.`, 'source-inspection');
-  }catch(e){browserProgress.textContent=e.message+' Check sandbox receipts before another paid attempt.';message('assistant',browserProgress.textContent,'error');}
+  }catch(e){appendSandboxReceipt(e.transaction);browserProgress.textContent=e.message+' Check sandbox receipts before another paid attempt.';message('assistant',browserProgress.textContent,'error');}
   finally{quoteSource.disabled=false;setBusy(false);}
 });
 

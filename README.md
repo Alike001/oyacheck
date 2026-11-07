@@ -129,3 +129,5 @@ The app is still a limited evidence-based checking prototype. Unknown public web
 - No qualifying Celo mainnet payment or ERC-8004 registration has been established by this test.
 
 The sandbox evidence does not prove unknown-site inspection or production readiness.
+
+See the [current buy integration and readiness audit](docs/BUY-INTEGRATION-AUDIT.md) for verified historical sandbox payment evidence, the production baseline, local safety repairs, and remaining mainnet submission requirements.
