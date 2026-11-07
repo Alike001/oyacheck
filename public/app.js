@@ -1,5 +1,5 @@
 import {voiceDecision} from './voice-policy.js';
-import {createVoiceActivityDetector, rmsLevel, VOICE_TIMING} from './voice-activity.js';
+import {createVoiceSession} from './voice-session.js';
 const $ = (selector) => document.querySelector(selector);
 const form = $('#check-form');
 const input = $('#message-input');
@@ -38,10 +38,7 @@ const buyDialogNetwork = $('#buy-dialog-network');
 const buyDialogClose = $('#buy-dialog-close');
 const buyDialogCancel = $('#buy-dialog-cancel');
 const buyDialogApprove = $('#buy-dialog-approve');
-const micButton = $('#mic-button');
 const voiceStatus = $('#voice-status');
-const voiceMeter = $('#voice-meter');
-const voiceLevel = $('#voice-level');
 const readAloud = $('#read-aloud');
 const autoVoice = $('#auto-voice');
 const mainnetPanel=$('#mainnet-investigation');
@@ -64,9 +61,9 @@ let lastScanInput = null;
 let conversation = [];
 let isBusy = false;
 let recordState = null;
-let useGroqSpeech = false;
-let currentUtterance = null;
-let voiceEpoch = 0;
+let voiceController=null;
+let voiceTarget=null;
+let voiceLanguage='en';
 let transcribing = false;
 
 // An explicit URL is a scan request. A question with no link is conversation.
@@ -89,7 +86,7 @@ async function jsonPost(path, body) {
 function setBusy(busy) {
   isBusy = busy;
   sendButton.disabled = busy;
-  if (micButton) micButton.disabled = busy;
+  voiceController?.setBusy(busy);
   input.disabled = busy;
   sendButton.textContent = busy ? 'Checking…' : checkMode==='ask' ? 'Ask question ↗' : checkMode==='message' ? 'Check message ↗' : 'Check link ↗';
   for(const button of document.querySelectorAll('[data-check-mode], .lang-button'))button.disabled=busy;
@@ -246,7 +243,7 @@ async function send(raw, force = 'auto') {
       conversation=[];
       const reply = data.explanation?.text || (language === 'pcm' ? 'We no get explanation for this check yet.' : 'An explanation is not available for this check.');
       if($('#ai-explanation').checked && data.explanation?.method!=='groq')$('#result-method').textContent='AI unavailable · prepared guidance';
-      if(readAloud.checked)readAnswer(reply);
+      if(readAloud.checked)queueMicrotask(()=>readAnswer(reply));
     } else {
       const response=demoActive ? await jsonPost('/api/demo/ask',{question:text,language:questionLanguage,history:conversation}) : report && lastScanInput ? await jsonPost('/api/chat',{question:text,input:lastScanInput,mode:lastScanMode,language:questionLanguage,history:conversation}) : await jsonPost('/api/ask',{question:text,language:questionLanguage,history:conversation});
       loading.remove();
@@ -268,18 +265,18 @@ function selectCheckMode(mode) {
 function showView(focus=false) {
   const app=location.pathname==='/app'||location.hash==='#assistant';
   $('#home-view').hidden=app;$('#app-view').hidden=!app;
-  if(!app){stopSpeech();voiceEpoch++;if(recordState){discardRecording=true;try{if(recorder?.state==='recording')recorder.stop();}catch{}cleanupAudio();}}
+  if(!app)voiceController?.cancel();
   for(const a of document.querySelectorAll('.nav-app')){if(app)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}
   document.title=app?'OyaCheck — Link and message checker':'OyaCheck — Check a link before you trust it';
   if(focus){if(app){$('#input-panel').open=true;input.focus({preventScroll:true});input.scrollIntoView({block:'center',behavior:'instant'});}else if(location.hash){const target=document.getElementById(location.hash.slice(1));if(target){target.setAttribute('tabindex','-1');target.focus({preventScroll:true});target.scrollIntoView();}}else {scrollTo(0,0);$('#intro-title').setAttribute('tabindex','-1');$('#intro-title').focus({preventScroll:true});}}
 }
-function navigate(path) {if(path!==location.pathname+location.hash)history.pushState(null,'',path);showView(true);}
+function navigate(path) {voiceController?.cancel();if(path!==location.pathname+location.hash)history.pushState(null,'',path);showView(true);}
 document.addEventListener('click',event=>{
   const a=event.target.closest('a[href]');if(!a||event.defaultPrevented||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey||a.target)return;
   const url=new URL(a.href);if(url.origin!==location.origin||!['/','/app'].includes(url.pathname))return;
   event.preventDefault();navigate(url.pathname+url.hash);
 });
-addEventListener('popstate',()=>showView(true));
+addEventListener('popstate',()=>{voiceController?.cancel();showView(true);});
 for(const button of document.querySelectorAll('[data-check-mode]'))button.addEventListener('click',()=>{selectCheckMode(button.dataset.checkMode);input.focus();});
 for(const button of document.querySelectorAll('[data-landing-mode]'))button.addEventListener('click',()=>{
   landingMode=button.dataset.landingMode;
@@ -289,7 +286,7 @@ for(const button of document.querySelectorAll('[data-landing-mode]'))button.addE
   $('#landing-guidance').textContent=landingMode==='url'?'Paste one public URL or domain. We won’t open it.':'Messages with or without a link. Remove private details.';
   document.querySelector('.landing-submit').textContent=landingMode==='url'?'Check this link →':'Check this message →';
 });
-$('#landing-form').addEventListener('submit',event=>{event.preventDefault();if(isBusy)return;const value=$('#landing-input').value;selectCheckMode(landingMode);input.value=value;navigate('/app');send(value);});
+$('#landing-form').addEventListener('submit',event=>{event.preventDefault();if(isBusy||recordState)return;const value=$('#landing-input').value;selectCheckMode(landingMode);input.value=value;navigate('/app');send(value);});
 $('#retry-check').addEventListener('click',()=>send(input.value));
 $('#new-check').addEventListener('click',()=>{$('#new-chat').click();$('#input-panel').open=true;input.focus();input.scrollIntoView({block:'center',behavior:'instant'});});
 showView();
@@ -311,7 +308,7 @@ async function refreshExplanation(){
     const data=await jsonPost('/api/analyze',{input:lastScanInput,mode:lastScanMode,language,explain:$('#ai-explanation').checked});
     updateEvidence(data);
     if($('#ai-explanation').checked&&data.explanation?.method!=='groq')$('#result-method').textContent='AI unavailable · prepared guidance';
-    if(readAloud.checked)readAnswer(data.explanation?.text||'');
+    if(readAloud.checked)queueMicrotask(()=>readAnswer(data.explanation?.text||''));
   }catch{
     language=previous.language==='pcm'?'pcm':'en';
     for(const b of document.querySelectorAll('.lang-button')){const selected=b.dataset.lang===language;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected));}
@@ -346,8 +343,7 @@ for(const button of document.querySelectorAll('.lang-button')){
 }
 $('#new-chat').addEventListener('click',()=>{
   stopSpeech();
-  voiceEpoch++;
-  if(recordState){discardRecording=true;try{if(recorder?.state==='recording')recorder.stop();}catch{}cleanupAudio();}
+  voiceController?.cancel();
   chat.replaceChildren();
   const welcome=document.createElement('div');welcome.className='empty-welcome';
   const icon=document.createElement('span');icon.className='welcome-orbit';icon.textContent='✳';icon.setAttribute('aria-hidden','true');
@@ -356,7 +352,7 @@ $('#new-chat').addEventListener('click',()=>{
   const desc=document.createElement('p');desc.textContent='Paste a link, share a forwarded message, or ask about online safety.';
   welcome.append(icon,kicker,title,desc);chat.append(welcome);
   if (buyConfirmDialog.open) buyConfirmDialog.close('cancel');
-  selectCheckMode('url');$('#plain-language').open=false;
+  selectCheckMode('url');$('#plain-language').open=true;
   $('#request-error').hidden=true;$('#retry-check').hidden=true;$('#input-panel').open=true;$('#back-to-result').hidden=true;$('#technical-details').open=false;$('#explanation-options').open=false;$('#question-panel').open=false;$('#ai-explanation').checked=false;$('#question-input').value='';$('#question-label').textContent='Have a safety question?';
   mainnetQuote.disabled=true;report=null;lastScanInput=null;demoActive=false;conversation=[];pendingQuote=null;quoteExpiresAt=0;browserInvestigation.hidden=true;input.value='';evidenceResult.hidden=true;evidenceEmpty.hidden=false;evidenceIndicator.textContent='NO CHECK YET';evidenceEmpty.querySelector('h3').textContent='Your next check starts here.';evidenceEmpty.querySelector('p').textContent='Paste a link or forwarded message. Findings and limits will appear here.';input.focus();
 });
@@ -484,206 +480,73 @@ fetch('/api/health').then(r=>r.json()).then(health=>{
 }).catch(()=>{aiStatus.textContent='AI status unavailable';});
 
 
-// Voice is opt-in; microphone amplitude is analysed locally to find pauses.
-// Transcribed URLs/private information still require human review before sending.
-function voiceMessage(value) { voiceStatus.textContent=value;if(report)$('#result-audio-status').textContent=value; }
-function stopSpeech() {
-  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-  currentUtterance=null;
-}
-function readAnswer(value) {
-  if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') {
-    voiceMessage('Your browser does not support spoken replies. You can still read the answer.');return;
-  }
-  if(currentUtterance && window.speechSynthesis.speaking) {stopSpeech();return;}
-  const text=String(value||'').replace(/\*\*/g,'').replace(/https?:\/\/\S+/g,'the official link shown in the evidence panel');
-  const utterance=new SpeechSynthesisUtterance(text.slice(0,950));
-  utterance.lang='en-NG';utterance.rate=.92;
-  const voices=window.speechSynthesis.getVoices();
-  utterance.voice=voices.find(v=>v.lang.toLowerCase()==='en-ng') || voices.find(v=>v.lang.toLowerCase().startsWith('en-')) || null;
-  if(utterance.voice) utterance.lang=utterance.voice.lang;
-  utterance.onstart=()=>{if(currentUtterance===utterance)voiceMessage('Speaking the answer…');};
-  utterance.onend=()=>{if(currentUtterance===utterance){currentUtterance=null;voiceMessage('Finished speaking. Tap Speak for another question.');}};
-  utterance.onerror=()=>{if(currentUtterance===utterance){currentUtterance=null;voiceMessage('Voice playback failed. Read the reply on screen.');}};
-  currentUtterance=utterance;
-  window.speechSynthesis.speak(utterance);
-}
-readAloud?.addEventListener('change',()=>{
-  if(!readAloud.checked)stopSpeech();
-  voiceMessage(readAloud.checked?'Spoken replies are on. Sound depends on your device voice.':'Spoken replies are off. Use 🔊 on a reply to hear it.');
-});
-
-let recorder, recordStream, recordChunks=[], recordTimer, discardRecording=false;
-let voiceAudioContext=null, voiceSource=null, voiceAnalyser=null, voiceMonitor=null;
-let voiceSpeechSeen=false;
-function stopVoiceMonitor(){
-  if(voiceMonitor){clearInterval(voiceMonitor);voiceMonitor=null;}
-  if(voiceSource){try{voiceSource.disconnect();}catch{}voiceSource=null;}
-  if(voiceAnalyser){try{voiceAnalyser.disconnect();}catch{}voiceAnalyser=null;}
-  if(voiceAudioContext){void voiceAudioContext.close().catch(()=>{});voiceAudioContext=null;}
-  if(voiceMeter)voiceMeter.hidden=true;
-  if(voiceLevel)voiceLevel.style.width='0%';
-  voiceSpeechSeen=false;
-}
-function autoStopAfterSilence(stream,epoch){
-  const Context=window.AudioContext || window.webkitAudioContext;
-  if(!Context){
-    voiceMessage('Listening… Your browser has no silence detection. Tap Stop when finished (18-second limit).');
-    return;
-  }
-  try{
-    const context=new Context();voiceAudioContext=context;
-    voiceSource=context.createMediaStreamSource(stream);
-    voiceAnalyser=context.createAnalyser();
-    voiceAnalyser.fftSize=2048;
-    voiceSource.connect(voiceAnalyser); // NEVER connect the microphone to the speakers.
-    const values=new Float32Array(voiceAnalyser.fftSize);
-    const detector=createVoiceActivityDetector();
-    if(voiceMeter)voiceMeter.hidden=false;
-    void context.resume().catch(()=>{
-      voiceMessage('Microphone active. Silence detection unavailable: tap Stop when done.');
-      stopVoiceMonitor();
-    });
-    voiceMonitor=setInterval(()=>{
-      if(epoch!==voiceEpoch || recorder?.state!=='recording' || recordState!=='recording')return;
-      try{
-        voiceAnalyser.getFloatTimeDomainData(values);
-        const level=rmsLevel(values);
-        const result=detector.sample(level,performance.now());
-        if(voiceLevel)voiceLevel.style.width=`${Math.max(4,Math.min(100,Math.round(level*450)))}%`;
-        if(result.speechDetected && !voiceSpeechSeen){
-          voiceSpeechSeen=true;
-          voiceMessage('I can hear you. Finish your thought; I’ll stop after a short pause.');
-        }
-        if(result.action==='no-speech'){
-          discardRecording=true;
-          voiceMessage('No speech detected. Tap Speak and try again.');
-          recorder.stop();
-        } else if(result.action==='stop' || result.action==='limit'){
-          voiceMessage(result.action==='limit'?'Recording limit reached. Processing your words…':'You finished speaking. Processing your question…');
-          recorder.stop();
-        }
-      }catch{
-        stopVoiceMonitor();
-        voiceMessage('Silence detection unavailable. Tap Stop to finish the recording.');
+// The shared controller owns recording, cancellation and playback for both entry points.
+function voiceMessage(value){voiceStatus.textContent=value;}
+function stopSpeech(){voiceController?.stopSpeech();}
+function readAnswer(value){voiceController?.speak(value,report?.language||language);}
+voiceController=createVoiceSession({
+  render({state,detail,level,active,busy}){
+    recordState=active?state:null;transcribing=state==='transcribing';
+    for(const dock of document.querySelectorAll('[data-voice-dock]')){
+      dock.dataset.state=state;
+      const label=state[0].toUpperCase()+state.slice(1),stateLabel=dock.querySelector('[data-voice-state]'),status=dock.querySelector('[role="status"]');
+      if(stateLabel.textContent!==label)stateLabel.textContent=label;
+      // Meter samples must not repeatedly announce the same status to screen readers.
+      if(status.textContent!==detail)status.textContent=detail;
+      const button=dock.querySelector('.mic-button');button.disabled=busy||state==='transcribing';
+      button.setAttribute('aria-pressed',String(active));button.setAttribute('aria-label',active?'Stop recording':'Speak a link or message');
+      button.querySelector('span').textContent=active?'Stop':'Speak';
+      dock.querySelector('[data-voice-cancel]').hidden=!active;
+      const meter=dock.querySelector('.voice-meter');meter.hidden=state!=='listening'||level===0;
+      meter.firstElementChild.style.width=`${Math.round(level*100)}%`;
+      dock.querySelector('select').disabled=active||busy;
+    }
+    sendButton.disabled=busy||active;
+    document.querySelector('.landing-submit').disabled=busy||active;
+    $('#stop-result-audio').hidden=!['preparing','speaking'].includes(state);
+    for(const button of document.querySelectorAll('#listen-result,.listen-reply'))button.disabled=active||busy;
+    if(report&&$('#result-audio-status').textContent!==detail)$('#result-audio-status').textContent=detail;
+  },
+  getLanguage:()=>voiceLanguage,
+  async transcript(value){
+    const target=voiceTarget||input,hasDraft=Boolean(target.value.trim());
+    const autoSend=target===input&&autoVoice.checked;
+    const decision=voiceDecision(value,{autoSend,hasDraft});
+    if(decision.action==='discard'){voiceMessage(decision.reason);return;}
+    if(decision.action==='review'){
+      // Keep the existing draft and never truncate or submit a sensitive transcript.
+      if(target.value.length+value.length+1>target.maxLength){voiceMessage('Transcript would exceed the input limit. Keep your draft; record a shorter message.');return;}
+      target.value=(hasDraft?target.value.trim()+'\n':'')+value.trim();
+      // A spoken sentence is a message, rather than an invalid URL request.
+      if(!HAS_LINK.test(value)||/\s/.test(value.trim())){
+        if(target===input)selectCheckMode('message');
+        else document.querySelector('[data-landing-mode="message"]').click();
       }
-    }, VOICE_TIMING.pollMs);
-  }catch{
-    stopVoiceMonitor();
-    voiceMessage('Listening… Tap Stop to finish; silence detection is unavailable on this device.');
+      target.focus();return;
+    }
+    $('#question-language').value=voiceLanguage;
+    await send(value,decision.intent);
   }
-}
-function cleanupAudio() {
-  stopVoiceMonitor();
-  if(recordTimer){clearTimeout(recordTimer);recordTimer=null;}
-  if(recordStream){recordStream.getTracks().forEach(t=>t.stop());recordStream=null;}
-  if(micButton){micButton.classList.remove('recording');micButton.setAttribute('aria-pressed','false');micButton.setAttribute('aria-label','Start recording a voice question');micButton.innerHTML='🎙 <span>Speak</span>';}
-  recordState=null;
-  if(!isBusy && !transcribing)sendButton.disabled=false;
-}
-async function acceptTranscript(value,epoch) {
-  if(epoch!==voiceEpoch)return;
-  const hasDraft=Boolean(input.value.trim());
-  const decision=voiceDecision(value,{autoSend:autoVoice?.checked!==false,hasDraft});
-  if(decision.action==='discard'){voiceMessage(decision.reason);return;}
-  if(decision.action==='review'){
-    input.value=(hasDraft?input.value.trim()+' ':'')+value.trim();
-    input.focus();voiceMessage(decision.reason);return;
-  }
-  voiceMessage('Heard your question. Getting an answer now…');
-  // Voice questions never spend funds or trigger browser navigation.
-  await send(value,decision.intent);
-}
-async function transmitRecording(blob,epoch) {
-  if(epoch!==voiceEpoch)return;
-  if(blob.size>2*1024*1024){voiceMessage('Clip too large. Record a shorter question.');return;}
-  if(!blob.size){voiceMessage('No speech captured. Please try again.');return;}
-  transcribing=true;
-  voiceMessage('Transcribing your message…');micButton.disabled=true;sendButton.disabled=true;
-  try {
-    const response=await fetch(`/api/voice/transcribe?lang=${encodeURIComponent(language)}`,{method:'POST',headers:{'Content-Type':blob.type||'audio/webm'},body:blob});
-    const d=await response.json().catch(()=>({}));
-    if(!response.ok)throw new Error(d.error||'Transcription unavailable.');
-    if(epoch!==voiceEpoch)return;
-    await acceptTranscript(d.text,epoch);
-  }catch(e){if(epoch===voiceEpoch)voiceMessage(e.message||'Could not transcribe. Please type your question.');}
-  finally{transcribing=false;micButton.disabled=isBusy;if(!isBusy)sendButton.disabled=false;}
-}
-async function beginRecording() {
-  if(transcribing){voiceMessage('Processing your previous recording.');return;}
-  stopSpeech();
-  if(!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder==='undefined' || !useGroqSpeech){
-    beginBrowserRecognition();return;
-  }
-  try{
-    discardRecording=false;
-    const epoch=voiceEpoch;
-    recordStream=await navigator.mediaDevices.getUserMedia({audio:true});
-    if(epoch!==voiceEpoch){cleanupAudio();return;}
-    const type=['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'].find(t=>MediaRecorder.isTypeSupported(t));
-    recorder=new MediaRecorder(recordStream,type?{mimeType:type}:{});
-    recordChunks=[];
-    recorder.ondataavailable=e=>{if(e.data?.size)recordChunks.push(e.data);};
-    recorder.onerror=()=>{voiceMessage('Microphone recording failed. Please try typing.');cleanupAudio();};
-    recorder.onstop=()=>{
-      const audio=new Blob(recordChunks,{type:recorder.mimeType||type||'audio/webm'});
-      const canceled=discardRecording;cleanupAudio();discardRecording=false;
-      if(!canceled && epoch===voiceEpoch)void transmitRecording(audio,epoch);
-    };
-    recorder.start();recordState='recording';sendButton.disabled=true;
-    micButton.classList.add('recording');micButton.setAttribute('aria-pressed','true');
-    micButton.setAttribute('aria-label','Stop recording');micButton.innerHTML='■ <span>Stop</span>';
-    voiceMessage('Listening… Speak naturally; OyaCheck stops when you pause. You can also tap Stop.');
-    // Safety fallback if the tab is suspended and the level monitor stops ticking.
-    recordTimer=setTimeout(()=>{
-      if(recorder?.state==='recording'){
-        if(!voiceSpeechSeen){discardRecording=true;voiceMessage('No speech detected. Try again.');}
-        else voiceMessage('Maximum recording time reached. Processing…');
-        recorder.stop();
-      }
-    }, VOICE_TIMING.maxRecordingMs);
-    autoStopAfterSilence(recordStream,epoch);
-  }catch{cleanupAudio();voiceMessage('Microphone unavailable or permission denied. Please type your question.');}
-}
-function beginBrowserRecognition() {
-  const Recognition=window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!Recognition){voiceMessage('Speech input is unavailable in this browser. Please type.');return;}
-  stopSpeech();
-  const epoch=voiceEpoch;
-  const recognition=new Recognition();
-  recognition.lang='en-NG';recognition.interimResults=false;recognition.maxAlternatives=1;recognition.continuous=false;
-  recordState='native';sendButton.disabled=true;
-  micButton.classList.add('recording');micButton.setAttribute('aria-pressed','true');
-  micButton.setAttribute('aria-label','Stop voice recognition');micButton.innerHTML='■ <span>Stop</span>';
-  voiceMessage('Listening using browser speech recognition. Audio may be processed by your browser provider.');
-  let spoken='',failed=false;
-  recognition.onresult=e=>{spoken=e.results?.[0]?.[0]?.transcript?.trim()||'';};
-  recognition.onerror=e=>{failed=true;voiceMessage(`Browser speech recognition unavailable (${e.error||'error'}). Type your question instead.`);};
-  recognition.onend=()=>{
-    cleanupAudio();
-    if(!failed && spoken && epoch===voiceEpoch)void acceptTranscript(spoken,epoch);
-  };
-  recorder={stop:()=>recognition.stop(),state:'recording'};
-  try{recognition.start();}catch{cleanupAudio();voiceMessage('Could not start speech recognition. Please type instead.');}
-}
-micButton?.addEventListener('click',()=>{
-  if(recordState){
-    if(recorder?.state==='recording')recorder.stop();
-    else cleanupAudio();
-    return;
-  }
-  if(isBusy || transcribing)return;
-  void beginRecording();
 });
-window.addEventListener('pagehide',()=>{
-  stopSpeech();voiceEpoch++;discardRecording=true;
-  try{if(recorder?.state==='recording')recorder.stop();}catch{}
-  cleanupAudio();
-});
-fetch('/api/health').then(r=>r.json()).then(d=>{
-  useGroqSpeech=d.voiceTranscription===true;
-  voiceMessage(useGroqSpeech?'Tap Speak once and talk. Silence detection stops recording after about 1.5 seconds; questions auto-send and replies speak aloud. URLs require review.':'Browser speech recognition is available if supported; voice questions auto-send after your browser detects the end of speech.');
-}).catch(()=>voiceMessage('Voice availability could not be checked; typing still works.'));
+for(const dock of document.querySelectorAll('[data-voice-dock]')){
+  dock.querySelector('.mic-button').addEventListener('click',()=>{
+    if(recordState){voiceController.stop();return;}
+    if(isBusy||transcribing)return;
+    voiceTarget=dock.dataset.voiceDock==='landing'?$('#landing-input'):input;
+    voiceLanguage=dock.querySelector('select').value;
+    for(const select of document.querySelectorAll('[data-voice-language]'))select.value=voiceLanguage;
+    void voiceController.start();
+  });
+  dock.querySelector('[data-voice-cancel]').addEventListener('click',()=>voiceController.cancel());
+  dock.querySelector('select').addEventListener('change',event=>{
+    voiceLanguage=event.target.value;
+    for(const select of document.querySelectorAll('[data-voice-language]'))select.value=voiceLanguage;
+  });
+}
+$('#stop-result-audio').addEventListener('click',stopSpeech);
+readAloud.addEventListener('change',()=>{if(!readAloud.checked)stopSpeech();});
+window.addEventListener('pagehide',()=>voiceController.cancel());
+fetch('/api/health').then(r=>{if(!r.ok)throw Error();return r.json();}).then(d=>voiceController.configure(d.voiceTranscription===true)).catch(()=>voiceController.availabilityFailed());
 
 
 // Preparation only. There is deliberately no browser endpoint that executes a

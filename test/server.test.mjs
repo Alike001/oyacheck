@@ -113,7 +113,7 @@ test('direct app route and product styles retain security headers',async()=>{
 test('checker puts two input modes first and discloses supporting tools',async()=>{
   const html=await(await fetch(origin+'/app')).text();
   assert.equal([...html.matchAll(/data-check-mode=/g)].length,2);
-  for(const id of ['voice-options','plain-language','technical-details','question-panel']){
+  for(const id of ['voice-options','technical-details','question-panel']){
     assert.match(html,new RegExp('<details id="'+id+'"'));
     assert.doesNotMatch(html,new RegExp('<details id="'+id+'"[^>]*\\sopen(?:\\s|>)'));
   }
@@ -126,4 +126,14 @@ test('licensed self-hosted fonts are explicitly served with the existing CSP',as
     const bytes=Buffer.from(await r.arrayBuffer());assert.equal(bytes.readUInt32BE(0),0x00010000);
   }
   assert.equal((await fetch(origin+'/fonts/../server.mjs')).status,404);
+});
+
+test('visible voice docks and controller retain opt-in review and security headers',async()=>{
+  const html=await(await fetch(origin+'/')).text();
+  for(const prefix of ['landing','app'])assert.match(html,new RegExp('data-voice-dock="'+prefix+'"'));
+  assert.match(html,/<details id="plain-language"[^>]* open/);
+  assert.match(html,/id="stop-result-audio" hidden/);
+  const r=await fetch(origin+'/voice-session.js');assert.equal(r.status,200);
+  assert.match(r.headers.get('content-security-policy'),/connect-src 'self'/);
+  assert.match(await r.text(),/createVoiceSession/);
 });

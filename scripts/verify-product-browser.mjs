@@ -11,7 +11,8 @@ export async function verifyProductBrowser(page,origin,artifacts){
     Object.defineProperty(window,'SpeechRecognition',{value:undefined,configurable:true});
     Object.defineProperty(window,'webkitSpeechRecognition',{value:undefined,configurable:true});
     window.__reviewSpoken=0;
-    if(window.speechSynthesis)window.speechSynthesis.speak=()=>{window.__reviewSpoken++;};
+    window.SpeechSynthesisUtterance=class{constructor(text){this.text=text;}};
+    if(window.speechSynthesis){window.speechSynthesis.getVoices=()=>[{lang:'en-NG',name:'Test voice'}];window.speechSynthesis.speak=utterance=>{window.__reviewSpoken++;utterance.onstart?.();};}
   });
   await page.route('**/*',route=>{const r=route.request(),u=new URL(r.url());
     if(u.origin!==base.origin){external.push(u.origin);return route.abort();}
@@ -43,7 +44,7 @@ export async function verifyProductBrowser(page,origin,artifacts){
     await scan('https://example.org@unrelated.example/account');await verifyExact();await fit(width);
     check(await page.locator('#finding-host').textContent()==='unrelated.example','Userinfo confused destination');
     check(!await page.locator('#input-panel').evaluate(e=>e.open),'Result competes with expanded editor');
-    check(await page.locator('#plain-language').evaluate(e=>!e.open)&&await page.locator('#technical-details').evaluate(e=>!e.open),'Secondary detail not disclosed');
+    check(await page.locator('#plain-language').evaluate(e=>e.open)&&await page.locator('#technical-details').evaluate(e=>!e.open),'Secondary detail not disclosed');
     await capture('link',width);
     const calls=requests.length;await page.locator('.main-nav a[href="/#how"]').click();await page.goBack();check(requests.length===calls,'History re-submitted');check(await page.locator('#message-input').inputValue()==='https://example.org@unrelated.example/account','History lost draft');
     await scan('Final notice: your bank account is blocked. Send your OTP immediately.','message');await verifyExact();await fit(width);await capture('message',width);
@@ -57,7 +58,7 @@ export async function verifyProductBrowser(page,origin,artifacts){
   }
   await scan('Final notice: your bank account is blocked. Send your OTP immediately.','message');
   const codes=responses.at(-1).reasons.map(x=>x.code).join(',');
-  await page.locator('#plain-language > summary').click();await record(()=>page.locator('[data-lang="pcm"]').click());await page.waitForFunction(()=>document.querySelector('#finding-title').textContent==='Some warning signs dey'&&!document.querySelector('#send-button').disabled);await verifyExact();
+  if(!await page.locator('#plain-language').evaluate(e=>e.open))await page.locator('#plain-language > summary').click();await record(()=>page.locator('[data-lang="pcm"]').click());await page.waitForFunction(()=>document.querySelector('#finding-title').textContent==='Some warning signs dey'&&!document.querySelector('#send-button').disabled);await verifyExact();
   check(responses.at(-1).reasons.map(x=>x.code).join(',')===codes,'Language changed indicators');
   await record(()=>page.locator('[data-lang="en"]').click());await page.waitForFunction(()=>document.querySelector('#finding-title').textContent==='Suspicious signals'&&!document.querySelector('#send-button').disabled);
   await page.locator('#explanation-options > summary').click();const count=requests.length;await page.locator('#ai-explanation').check();check(requests.length===count,'AI checkbox made an automatic request');
@@ -67,7 +68,7 @@ export async function verifyProductBrowser(page,origin,artifacts){
   await edit();await page.locator('#message-input').fill('https://example.org/unsent-draft');await page.locator('#question-panel > summary').click();await page.locator('#question-input').fill('What was not checked?');await page.locator('#question-submit').click();await page.waitForFunction(()=>!document.querySelector('#question-submit').disabled&&document.querySelectorAll('.chat-message.assistant').length>0);
   check(await page.locator('#message-input').inputValue()==='https://example.org/unsent-draft','Chat overwrote checker draft');
   check(await page.locator('#chat-stream').evaluate(e=>getComputedStyle(e).overflowY==='visible'&&getComputedStyle(e).maxHeight==='none'),'Nested conversation scroll');
-  await page.locator('#new-check').click();await page.locator('#voice-options > summary').click();await page.locator('#mic-button').click();check((await page.locator('#voice-status').textContent()).includes('unavailable'),'Missing voice availability state');
+  await page.locator('#new-check').click();await page.locator('#mic-button').click();check((await page.locator('#voice-status').textContent()).includes('unavailable'),'Missing voice availability state');
   await page.evaluate(()=>Object.defineProperty(window,'SpeechRecognition',{configurable:true,value:class{start(){queueMicrotask(()=>{this.onerror({error:'not-allowed'});this.onend();});}stop(){this.onend();}}}));
   await page.locator('#mic-button').click();await page.waitForFunction(()=>document.querySelector('#voice-status').textContent.includes('not-allowed'));check(await page.locator('#send-button').isEnabled(),'Permission failure blocked typing');
   const secret='https://example.org/private?token=redesign-private-fixture';
@@ -75,11 +76,13 @@ export async function verifyProductBrowser(page,origin,artifacts){
   await page.locator('#message-input').fill(secret);await page.locator('#send-button').click();check(await page.locator('#send-button').isDisabled(),'Loading duplicate guard missing');await page.locator('#request-error').waitFor({state:'visible'});check(await page.locator('#message-input').inputValue()===secret,'Error lost draft');check(await page.locator('#evidence-result').isHidden(),'Error retained stale finding');await page.locator('#retry-check').click();await page.waitForFunction(()=>!document.querySelector('#send-button').disabled&&!document.querySelector('#evidence-result').hidden);
   check(!page.url().includes('redesign-private-fixture')&&await page.evaluate(()=>![JSON.stringify(history.state),JSON.stringify(localStorage),JSON.stringify(sessionStorage)].some(x=>x.includes('redesign-private-fixture'))),'Private input persisted');
   check(!(await page.locator('#evidence-result').textContent()).includes('redesign-private-fixture'),'Private query exposed in report');
-  await page.locator('#new-check').click();await page.locator('#message-input').focus();await page.keyboard.press('Tab');check(await page.evaluate(()=>document.activeElement.id)==='send-button','Primary keyboard path unclear');
+  await page.locator('#new-check').click();await page.locator('#message-input').focus();await page.keyboard.press('Tab');check(await page.evaluate(()=>document.activeElement.id)==='mic-button','Primary keyboard path unclear');
+  await page.locator('#voice-options > summary').click();await page.locator('#read-aloud').check();
+  await scan('https://example.org');await page.waitForFunction(()=>window.__reviewSpoken===2);check(await page.locator('#stop-result-audio').isVisible(),'Explicit automatic playback has no Stop control');await page.locator('#stop-result-audio').click();await edit();await page.locator('#read-aloud').uncheck();
   await page.getByRole('link',{name:'FAQ',exact:true}).click();await page.locator('#faq summary').first().focus();await page.keyboard.press('Enter');check(await page.locator('#faq details').first().evaluate(e=>e.open),'Keyboard FAQ failed');
   await page.locator('#preview-example').click();await page.waitForFunction(()=>!document.querySelector('#preview-result').hidden&&!document.querySelector('#preview-example').disabled);check(await page.locator('#preview-host').textContent()==='unrelated.example','Preview did not use actual analyzer');
   await page.evaluate(()=>scrollTo({top:0,behavior:'instant'}));await page.screenshot({path:`${artifacts}/live-preview-desktop.png`,fullPage:true});
   for(const path of ['/fonts/lato-regular.ttf','/fonts/lato-bold.ttf'])check((await page.request.get(origin+path)).status()===200,'Local font missing');
   check(external.length===0,'Unexpected external navigation/service');check(errors.length===0,errors.join('; '));
-  return {browser:'real Chromium',viewports:results,controlledFixtures:5,languagePreservesIndicators:true,AI:'explicit opt-in; actual prepared fallback, no live key',audio:'mocked playback invoked only on click',questionDraftPreserved:true,noNestedScroll:true,voicePermission:'mocked denial restored typing',errorAndRetry:true,privateInput:true,keyboard:true,realPreview:true,externalRequests:external,financialRequests:0,pageErrors:errors};
+  return {browser:'real Chromium',viewports:results,controlledFixtures:5,languagePreservesIndicators:true,AI:'explicit opt-in; actual prepared fallback, no live key',audio:'mocked playback; explicit Listen, opt-in automatic reading and Stop',questionDraftPreserved:true,noNestedScroll:true,voicePermission:'mocked denial restored typing',errorAndRetry:true,privateInput:true,keyboard:true,realPreview:true,externalRequests:external,financialRequests:0,pageErrors:errors};
 }

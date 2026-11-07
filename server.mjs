@@ -24,6 +24,7 @@ const PUBLIC_FILES = new Map([
   ['/fonts/lato-bold.ttf', ['fonts/lato-bold.ttf','font/ttf']],
   ['/fonts/OFL-Lato.txt', ['fonts/OFL-Lato.txt','text/plain; charset=utf-8']],
   ['/app.js', ['app.js','text/javascript; charset=utf-8']],
+  ['/voice-session.js', ['voice-session.js','text/javascript; charset=utf-8']],
   ['/voice-policy.js', ['voice-policy.js','text/javascript; charset=utf-8']],
   ['/voice-activity.js', ['voice-activity.js','text/javascript; charset=utf-8']],
   ['/styles.css', ['styles.css','text/css; charset=utf-8']],
