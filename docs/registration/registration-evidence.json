@@ -464,7 +464,7 @@
       "matchingMint": true
     }
   ],
-  "status": "FINALITY_NOT_CONFIRMED_BY_TWO_ENDPOINTS",
+  "status": "FINALIZED_TWO_ENDPOINTS",
   "fees": {
     "gasUsed": "178466",
     "effectiveGasPriceWei": "202500000000",
@@ -489,7 +489,7 @@
       "observation": "Earlier one-off finalized result was above receipt, but a subsequent full verification reported 0x4e5d5d4 below receipt. Inconsistent result cannot establish finality."
     }
   ],
-  "limitations": "Mined success and latest ownership verified. No two-endpoint finalized-success claim. Recheck finalized heads and canonical receipt before publishing a finalized assertion.",
+  "limitations": "Earlier pending and provider-warning observations are retained as history. See finalizedConfirmation for two independent full verifications using the finalized tag.",
   "finalityRecheck": {
     "checkedAt": "2026-11-07T17:51:05.383Z",
     "tag": "finalized",
@@ -503,5 +503,109 @@
         "error": "fetch failed"
       }
     ]
+  },
+  "finalizedConfirmation": {
+    "checkedAt": "2026-11-07T17:56:38.131Z",
+    "tag": "finalized",
+    "endpoints": [
+      {
+        "endpoint": "https://forno.celo.org",
+        "head": {
+          "number": "0x4e5d869",
+          "hash": "0x301d9d9435c942d333c70b99d46e03e7407c9df70d0bb9fe69d3c8cd8336f653",
+          "timestamp": "0x6aef60bf"
+        },
+        "result": {
+          "state": "verified",
+          "hash": "0x56b7126b6040de24af3d78017e913aac6ff749ba05878e4776a1437e314de74c",
+          "explorerUrl": "https://celoscan.io/tx/0x56b7126b6040de24af3d78017e913aac6ff749ba05878e4776a1437e314de74c",
+          "evidence": {
+            "verified": true,
+            "transactionHash": "0x56b7126b6040de24af3d78017e913aac6ff749ba05878e4776a1437e314de74c",
+            "chainId": 42220,
+            "finalized": {
+              "number": "0x4e5d869",
+              "hash": "0x301d9d9435c942d333c70b99d46e03e7407c9df70d0bb9fe69d3c8cd8336f653",
+              "timestamp": "0x6aef60bf"
+            },
+            "owner": "0x9ceaa6abfb2bc1ac202f96496cdc683d86bc458a",
+            "agentURI": "https://oyacheck-beta.onrender.com/agent-registration.json",
+            "agentWallet": "0x9ceaa6abfb2bc1ac202f96496cdc683d86bc458a",
+            "registration": {
+              "agentId": 10051,
+              "agentRegistry": "eip155:42220:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432"
+            },
+            "fees": {
+              "gasUsed": "178466",
+              "effectiveGasPriceWei": "202500000000",
+              "l1FeeWei": "0",
+              "operatorFeeWei": "0",
+              "totalGasCostWei": "36139365000000000",
+              "withinApprovedCeiling": true
+            }
+          }
+        }
+      },
+      {
+        "endpoint": "https://1rpc.io/celo",
+        "head": {
+          "number": "0x4e5d5d4",
+          "hash": "0x6e87fde2d2a0cc99b84c4274847d6c82de29a7e10021af1d65123157072da53e",
+          "timestamp": "0x6aef5e2a"
+        },
+        "result": {
+          "state": "pending-finality",
+          "hash": "0x56b7126b6040de24af3d78017e913aac6ff749ba05878e4776a1437e314de74c"
+        }
+      },
+      {
+        "endpoint": "https://celo-json-rpc.stakely.io",
+        "head": {
+          "number": "0x4e5d869",
+          "hash": "0x301d9d9435c942d333c70b99d46e03e7407c9df70d0bb9fe69d3c8cd8336f653",
+          "timestamp": "0x6aef60bf"
+        },
+        "result": {
+          "state": "verified",
+          "hash": "0x56b7126b6040de24af3d78017e913aac6ff749ba05878e4776a1437e314de74c",
+          "explorerUrl": "https://celoscan.io/tx/0x56b7126b6040de24af3d78017e913aac6ff749ba05878e4776a1437e314de74c",
+          "evidence": {
+            "verified": true,
+            "transactionHash": "0x56b7126b6040de24af3d78017e913aac6ff749ba05878e4776a1437e314de74c",
+            "chainId": 42220,
+            "finalized": {
+              "number": "0x4e5d869",
+              "hash": "0x301d9d9435c942d333c70b99d46e03e7407c9df70d0bb9fe69d3c8cd8336f653",
+              "timestamp": "0x6aef60bf"
+            },
+            "owner": "0x9ceaa6abfb2bc1ac202f96496cdc683d86bc458a",
+            "agentURI": "https://oyacheck-beta.onrender.com/agent-registration.json",
+            "agentWallet": "0x9ceaa6abfb2bc1ac202f96496cdc683d86bc458a",
+            "registration": {
+              "agentId": 10051,
+              "agentRegistry": "eip155:42220:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432"
+            },
+            "fees": {
+              "gasUsed": "178466",
+              "effectiveGasPriceWei": "202500000000",
+              "l1FeeWei": "0",
+              "operatorFeeWei": "0",
+              "totalGasCostWei": "36139365000000000",
+              "withinApprovedCeiling": true
+            }
+          }
+        }
+      }
+    ]
+  },
+  "loopsHouse": {
+    "status": "CELO ALL SET",
+    "source": "owner confirmation in this session",
+    "checks": [
+      "Agent wallet verified",
+      "Attribution tag seen onchain",
+      "ERC-8004 identity registered"
+    ],
+    "independentlyInspectedDashboard": false
   }
 }

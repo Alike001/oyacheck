@@ -1,0 +1,65 @@
+{
+  "capturedAt": "2026-11-07T17:58:57.513Z",
+  "source": "https://gateway.usebuy.ai",
+  "method": "POST",
+  "url": "https://gateway.usebuy.ai/v1/browser/sessions",
+  "body": {
+    "durationMinutes": 1
+  },
+  "httpStatus": 402,
+  "offers": [
+    {
+      "atomic": 3606,
+      "token": "USDC",
+      "asset": "0xceba9300f2b948710d2653dd7b07f33a8b32118c",
+      "payTo": "0x20faaca5f980e29639a0fcc6dca6988e18ed333b",
+      "chainId": 42220,
+      "network": "Celo mainnet",
+      "endpoint": "https://gateway.usebuy.ai/v1/browser/sessions",
+      "method": "POST",
+      "body": "{\"durationMinutes\":1}",
+      "durationMinutes": 1,
+      "capability": "browser.sessions.create",
+      "source": "https://csirt.ncc.gov.ng/index.php/resources/security-advisories/452-phishing-campaign-impersonating-official-verifymydevice-gov-ng-device-verification-portal"
+    },
+    {
+      "atomic": 3606,
+      "token": "USDT",
+      "asset": "0x48065fbbe25f71c9282ddf5e1cd6d6a887483d5e",
+      "payTo": "0x20faaca5f980e29639a0fcc6dca6988e18ed333b",
+      "chainId": 42220,
+      "network": "Celo mainnet",
+      "endpoint": "https://gateway.usebuy.ai/v1/browser/sessions",
+      "method": "POST",
+      "body": "{\"durationMinutes\":1}",
+      "durationMinutes": 1,
+      "capability": "browser.sessions.create",
+      "source": "https://csirt.ncc.gov.ng/index.php/resources/security-advisories/452-phishing-campaign-impersonating-official-verifymydevice-gov-ng-device-verification-portal"
+    },
+    {
+      "atomic": 3606,
+      "token": "USAT",
+      "asset": "0xd2ab3c9a02dbbab236bfec45d1d755df4267f771",
+      "payTo": "0x20faaca5f980e29639a0fcc6dca6988e18ed333b",
+      "chainId": 42220,
+      "network": "Celo mainnet",
+      "endpoint": "https://gateway.usebuy.ai/v1/browser/sessions",
+      "method": "POST",
+      "body": "{\"durationMinutes\":1}",
+      "durationMinutes": 1,
+      "capability": "browser.sessions.create",
+      "source": "https://csirt.ncc.gov.ng/index.php/resources/security-advisories/452-phishing-campaign-impersonating-official-verifymydevice-gov-ng-device-verification-portal"
+    }
+  ],
+  "provider": {
+    "provider": "buy-browser-worker",
+    "agentId": 9894,
+    "agentRegistry": "eip155:42220:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+    "registration": "https://gateway.usebuy.ai/v1/providers/buy-browser-worker/agent-registration.json"
+  },
+  "payerConfirmed": false,
+  "tokenSelectedByOwner": false,
+  "purchaseReady": false,
+  "noPaymentAuthorizationSent": true,
+  "limitation": "Unpaid quote only; no durable executable plan ID or payment approval. Refresh price after payer/token are confirmed."
+}

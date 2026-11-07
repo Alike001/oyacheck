@@ -1,5 +1,9 @@
 # Registered identity, metadata candidate and Build with buy readiness
 
+Current status: [finalized identity and buy payer readiness](FINAL-IDENTITY-AND-BUY-READINESS.md).
+Forno and Stakely now verify finality, and the owner confirms Loops House CELO ALL SET.
+Pending observations below are historical snapshots retained as evidence.
+
 This is a local read-only release candidate, prepared 2026-11-07. No new
 registration, signing, broadcasting, spending, push, deployment or submission
 was performed. The original one-attempt journal and hash companion are intact.
