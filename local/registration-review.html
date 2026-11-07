@@ -6,9 +6,11 @@
 <dl id="details"></dl><h2>Exact unsigned request</h2><pre id="transaction"></pre>
 <h2>Stage 1 · Network and account review</h2><p>Network and account must match the preview. No network switch, signature or transaction authorization is requested here.</p>
 <label>Wallet extension <select id="provider"><option value="">Select MetaMask</option></select></label>
+<button id="recheck-wallet" disabled>Recheck MetaMask status · read-only</button>
 <label><input id="reviewed" type="checkbox"> I reviewed the network, wallet, registry, function, URI, fees and zero value. I want to request account access only.</label>
-<button id="connect" disabled>Check MetaMask account · no signing</button><p id="wallet" role="status">Connected wallet: not checked.</p>
-<button id="prepare-final" disabled>Re-estimate and prepare final review</button>
+<button id="connect" aria-describedby="stage1-help wallet" disabled>Check MetaMask account · no signing</button><p id="wallet" role="status">Connected wallet: not checked.</p>
+<p id="stage1-help" role="status" aria-live="polite">Loading review eligibility…</p>
+<button id="prepare-final" aria-describedby="stage1-help" disabled>Re-estimate and prepare final review</button>
 <section id="final-stage" hidden><h2>Stage 2 · Final transaction review</h2>
 <p>All fields above were refreshed for this step. Review the full calldata and maximum gas cost again. This review expires after 60 seconds.</p>
 <p>Full calldata fingerprint</p><pre id="calldata-fingerprint"></pre><p>Exact transaction fingerprint</p><pre id="plan-fingerprint"></pre>
