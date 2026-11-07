@@ -27,3 +27,6 @@ test('blank recordings are ignored, long turns reviewed',()=>{
   assert.equal(voiceDecision(' ').action,'discard');
   assert.equal(voiceDecision('A'.repeat(451)).action,'review');
 });
+test('dictated secrets require review even without is/na punctuation or long digits',()=>{
+  for(const value of ['my OTP 123456','PIN 1234','BVN one two three four','my password huntertwo','NIN number one two','access code blue monkey','verification code 4567','What is an OTP?','Please use 1234','my O T P one two three four','N I N one two three','my access codes blue monkey','passwords apple pear'])assert.equal(voiceDecision(value,{autoSend:true}).action,'review',value);
+});

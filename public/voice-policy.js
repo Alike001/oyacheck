@@ -3,8 +3,10 @@
 // This does not decide if a URL is safe; the server evidence engine does that.
 const HOST = /(?:https?:\/\/|www\.|\b(?:[a-z0-9-]+\.)+[a-z]{2,}\b)/i;
 const EMAIL = /\b[^\s@]+@[^\s@]+\.[a-z]{2,}\b/i;
-const LONG_DIGITS = /(?:\+?\d[\s-]?){7,}/;
-const CREDENTIAL = /\b(?:my\s+)?(?:password|passcode|otp|one[- ]time code|pin|bvn|nin|cvv|private key|seed phrase)\b\s*(?:is|are|na|=|:|number|code)\s*[^\s,.!?]{3,}/i;
+const LONG_DIGITS = /(?:\+?\d[\s-]?){4,}/;
+// Dictation can omit punctuation, "is", or read secrets as words. Conservatively
+// review any sensitive term, including a harmless question about that term.
+const CREDENTIAL = /\b(?:passwords?|passcodes?|o\s*t\s*ps?|one[- ]time (?:codes?|passwords?)|pins?|b\s*v\s*ns?|n\s*i\s*ns?|cvv|private keys?|seed phrases?|recovery phrases?|access codes?|verification codes?|security codes?)\b/i;
 export function voiceDecision(transcript,{autoSend=true,hasDraft=false}={}) {
   const text=String(transcript||'').trim();
   if(!text) return {action:'discard',reason:'No speech detected.'};
@@ -13,6 +15,6 @@ export function voiceDecision(transcript,{autoSend=true,hasDraft=false}={}) {
   if(EMAIL.test(text) || LONG_DIGITS.test(text) || CREDENTIAL.test(text))
     return {action:'review',reason:'This may contain private information. Remove it before sending.'};
   if(text.length>450) return {action:'review',reason:'The spoken question is too long for automatic chat. Review it first.'};
-  if(!autoSend) return {action:'review',reason:'Automatic voice sending is off. Press Send when ready.'};
+  if(!autoSend) return {action:'review',reason:'Review the transcript and remove private details before choosing Check.'};
   return {action:'send',intent:'ask',reason:'Question transcribed. Sending automatically.'};
 }
