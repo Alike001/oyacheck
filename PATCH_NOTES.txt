@@ -1,0 +1,21 @@
+OyaCheck v0.9 - Lookalike evidence patch
+
+This patch changes only lib/analyze.mjs and test/analyze.test.mjs.
+It classifies the spelling 'secure-verifymedevice.ng' as suspicious, NOT as a known-phishing match.
+The NCC-CSIRT advisory explicitly lists 'secure-verifymydevice.ng' (with 'my').
+The evidence source is not applied to a merely similar hostname.
+
+Validated locally: npm run check, npm test (127 passing).
+
+Install after making a backup of your existing OyaCheck directory:
+  cd ~/Desktop/celo
+  cp -a official-link-agent "official-link-agent-backup-$(date +%Y%m%d-%H%M%S)"
+  unzip -o ~/Downloads/oyacheck-lookalike-patch.zip -d official-link-agent
+  cd official-link-agent
+  npm run check
+  npm test
+
+Test using this canonical v0.9 engine (not the older check.mjs script):
+  node --input-type=module -e 'import { analyze } from "./lib/analyze.mjs"; for (const d of ["secure-verifymydevice.ng","secure-verifymedevice.ng"]) console.log(d, analyze(d).status)'
+
+Expected: known-phishing then suspicious. The engine performs NO live website visit or paid browser call.

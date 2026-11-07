@@ -1,0 +1,16 @@
+{
+  "name": "oyacheck",
+  "version": "0.9.0",
+  "private": true,
+  "type": "module",
+  "description": "OyaCheck: English/Pidgin voice chat with automatic silence detection and safe review gates",
+  "scripts": {
+    "dev": "node server.mjs",
+    "start": "node server.mjs",
+    "test": "node --test test/*.test.mjs",
+    "check": "node --check server.mjs && node --check lib/analyze.mjs && node --check lib/explain.mjs && node --check lib/chat.mjs && node --check lib/general.mjs && node --check lib/buy-browser.mjs && node --check public/app.js && node --check public/voice-policy.js && node --check lib/voice.mjs && node --check public/voice-activity.js"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
