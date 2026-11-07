@@ -1,0 +1,13 @@
+{
+  "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+  "name": "OyaCheck",
+  "description": "OyaCheck helps people examine links and forwarded messages using deterministic hostname checks, curated Nigerian Communications Commission advisories and warning signals, with optional AI explanations and voice assistance in English and Nigerian Pidgin. The public beta does not open submitted websites, guarantee safety or accept x402 payments. Paid refresh of a fixed official advisory is an operator-controlled integration that remains disabled in production.",
+  "image": "https://oyacheck-beta.onrender.com/favicon.svg",
+  "services": [
+    { "name": "web", "endpoint": "https://oyacheck-beta.onrender.com/" }
+  ],
+  "x402Support": false,
+  "active": true,
+  "registrations": [],
+  "supportedTrust": []
+}

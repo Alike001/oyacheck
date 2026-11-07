@@ -1,5 +1,10 @@
 # OyaCheck mainnet pilot: implementation, release and approval plan
 
+Update: [identity and read-only release candidate](IDENTITY-AND-RELEASE-RC.md)
+records the issued event tag, current ERC-8004 procedure and stricter hosted
+financial lockout. Production/Render purchase ledgers are now blocked by code;
+this local pilot plan does not authorize enabling them.
+
 Prepared 2026-11-07, on `fix/ai-reliability-mobile`. Deadline:
 **November 9, 2026, 09:00 GMT**. This document is a plan, not spending approval.
 No wallet was created, imported, registered, funded, unlocked or used to sign.

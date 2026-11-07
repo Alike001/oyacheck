@@ -1,5 +1,9 @@
 # Build with buy integration and readiness audit
 
+Current follow-up: [identity and read-only release candidate](IDENTITY-AND-RELEASE-RC.md).
+The event code is now known (`celo_03e76ac742c7`); agent wallet/identity remain
+unverified. The historical findings below are retained as baseline evidence.
+
 Historical baseline audit. The later [mainnet preparation and release plan](MAINNET-RELEASE-PLAN.md) supersedes its implementation/readiness status; historical sandbox receipts remain valid.
 
 Verified 2026-11-07 on `fix/ai-reliability-mobile`. Deadline:
