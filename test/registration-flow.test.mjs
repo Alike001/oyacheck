@@ -137,3 +137,20 @@ test('a review that expires while claiming cannot request MetaMask and stays res
   await assert.rejects(f.flow.submit(true,plan.fingerprint),/Fresh successful/);
   assert.equal(f.sends(),0);assert.equal(f.journal.status().reserved,true);
 });
+
+test('read-only recovery preserves the recorded hash and precise failure without releasing the attempt',async t=>{
+  const f=await fixture(t),plan=await f.plan();f.journal.claim(plan);f.journal.attach(hash,plan.fingerprint);
+  const server=createReviewServer({attempts:f.journal,verify:async()=>{throw new Error('RPC HTTP 503');}});
+  server.listen(0,'127.0.0.1');await once(server,'listening');t.after(()=>new Promise(resolve=>server.close(resolve)));
+  const origin=`http://127.0.0.1:${server.address().port}`,response=await fetch(origin+'/verify'),body=await response.json();
+  assert.equal(response.status,503);assert.equal(body.hash,hash);assert.equal(body.state,'needs-review');assert.match(body.error,/RPC HTTP 503/);
+  assert.equal(f.journal.status().reserved,true);assert.equal(f.journal.status().hash,hash);assert.equal(f.sends(),0);
+  assert.equal((await(await fetch(origin+'/policy')).json()).sendingEnabled,false);
+});
+
+test('a mined receipt awaiting finality remains read-only pending, with its original hash',async t=>{
+  const f=await fixture(t),plan=await f.plan();f.journal.claim(plan);f.journal.attach(hash,plan.fingerprint);
+  const server=createReviewServer({attempts:f.journal,verify:async()=>({state:'pending-finality',hash})});
+  server.listen(0,'127.0.0.1');await once(server,'listening');t.after(()=>new Promise(resolve=>server.close(resolve)));
+  const response=await fetch(`http://127.0.0.1:${server.address().port}/verify`);assert.deepEqual(await response.json(),{state:'pending-finality',hash});assert.equal(f.journal.status().reserved,true);assert.equal(f.sends(),0);
+});

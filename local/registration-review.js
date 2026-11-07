@@ -189,7 +189,7 @@ if (typeof document !== 'undefined') {
   $('final-reviewed').addEventListener('change',update);
   async function recover(){
     recovery=await api('/attempt');$('recovery').hidden=!recovery.reserved;
-    if(recovery.reserved){connected=false;flow?.invalidate();$('final-stage').hidden=true;$('recovery-status').textContent=JSON.stringify(recovery,null,2);}
+    if(recovery.reserved){connected=false;flow?.invalidate();$('final-stage').hidden=true;$('recorded-hash').textContent=recovery.hash?`Recorded transaction hash: ${recovery.hash}`:'No transaction hash recorded. Reservation alone does not prove a wallet request or broadcast.';$('recovery-status').textContent=JSON.stringify(recovery,null,2);}
     update();
   }
   async function checkReceipt(){busy=true;update();try{const result=await pollRegistration(()=>api('/verify'));$('recovery-status').textContent=JSON.stringify(result,null,2);}catch(error){$('recovery-status').textContent='Recovery uncertain: '+error.message+'. Do not resubmit.';}finally{busy=false;update();}}

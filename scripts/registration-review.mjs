@@ -59,7 +59,8 @@ export function createReviewServer({load=()=>readJSON('../docs/registration/unsi
       if(path==='/attempt')return reply(200,attempts.status());
       if(path==='/verify'){
         const state=attempts.status();if(!state.hash)return reply(409,{state:'needs-review',error:'Recover the original public hash from MetaMask Activity; never resubmit'});
-        return reply(200,await verify(state.hash,state.attempt.transaction));
+        try{return reply(200,await verify(state.hash,state.attempt.transaction));}
+        catch(error){return reply(503,{state:'needs-review',hash:state.hash,error:`Read-only receipt verification failed: ${String(error.message).slice(0,300)}`,instruction:'Keep the existing reservation. Recheck only this hash; never resubmit.'});}
       }
       if(assets.has(path)){const [file,type]=assets.get(path);return reply(200,await readFile(new URL(`../local/${file}`,import.meta.url)),type);}
       if(path==='/preview'){cached??=await load();return reply(200,cached);}

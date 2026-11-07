@@ -16,7 +16,7 @@
 <p>Full calldata fingerprint</p><pre id="calldata-fingerprint"></pre><p>Exact transaction fingerprint</p><pre id="plan-fingerprint"></pre>
 <label><input id="final-reviewed" type="checkbox"> I reviewed this exact transaction, fingerprint and maximum gas cost. No retry or additional registration is approved.</label>
 <p id="send-policy" role="status">Sending locked at this checkpoint.</p><button id="submit" disabled>Request one MetaMask confirmation · locked</button></section>
-<section id="recovery" hidden><h2>Existing attempt · recovery only</h2><p>Do not submit another registration. A missing or pending hash requires reconciliation in MetaMask Activity.</p><pre id="recovery-status"></pre>
+<section id="recovery" hidden><h2>Existing attempt · recovery only</h2><p>Do not submit another registration. A missing or pending hash requires reconciliation in MetaMask Activity.</p><p id="recorded-hash" aria-live="polite"></p><pre id="recovery-status"></pre>
 <label>Original public transaction hash <input id="recovered-hash" type="text" autocomplete="off"></label><button id="attach-hash" disabled>Record recovered hash · no spending</button><button id="receipt" disabled>Check receipt · read-only</button></section>
 <p>Separate explicit human authorization is required to enable sending. After a genuine receipt exists, verification obtains the actual Registered agent ID, owner, metadata URI and receiving wallet.</p>
 </main></body></html>
