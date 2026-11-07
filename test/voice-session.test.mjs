@@ -85,3 +85,9 @@ test('diagnostics local-only playback never selects remote voices',()=>{
   const states=[];const session=createVoiceSession({env:f.env,render:v=>states.push(v),transcript:async()=>{},getLanguage:()=> 'en',localPlaybackOnly:true});session.speak('test');assert.equal(spoken,0);assert.equal(states.at(-1).state,'error');
   f.env.speechSynthesis.getVoices=()=>[{name:'Local English',lang:'en-GB',localService:true}];session.speak('test');assert.equal(spoken,1);
 });
+test('real recognition result transitions to Reviewing before deliberate submission',async()=>{
+  const f=fixture();await f.session.start();f.recognition.onresult({results:[[{transcript:'A message to review'}]]});f.recognition.onend();await flush();assert.equal(f.states.at(-1).state,'reviewing');assert.equal(f.states.at(-1).active,false);assert.equal(f.fetches,0);
+});
+test('missing recognition backend is unavailable before the user tries to speak',()=>{
+  const f=fixture();f.env.SpeechRecognition=undefined;f.session.configure(false);assert.equal(f.states.at(-1).state,'error');assert.match(f.states.at(-1).detail,/unavailable/);assert.equal(f.starts,0);assert.equal(f.states.at(-1).active,false);
+});

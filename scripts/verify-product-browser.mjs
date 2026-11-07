@@ -30,6 +30,11 @@ export async function verifyProductBrowser(page,origin,artifacts){
     check(await page.locator('#technical-reasons li').allTextContents().then(list=>JSON.stringify(list)===JSON.stringify(data.reasons.map(x=>x.text))),'Full provenance lost');
     if(data.host)check(await page.locator('#finding-host').textContent()===data.host,'Wrong actual hostname');
   };
+  await page.goto(origin+'/');await page.locator('[data-voice-dock=landing] [data-session-language=pcm]').click();
+  await page.locator('[data-landing-mode=message]').click();const landingText='Final notice: your bank account is blocked. Send your OTP immediately.';await page.locator('#landing-input').fill(landingText);
+  await record(()=>page.locator('.landing-submit').click());await page.waitForFunction(()=>!document.querySelector('#send-button').disabled&&!document.querySelector('#evidence-result').hidden);
+  check(new URL(page.url()).pathname==='/app'&&await page.locator('#message-input').inputValue()===landingText,'Landing lost submitted draft');check(responses.at(-1).language==='pcm'&&responses.at(-1).status==='suspicious','Landing language/mode not applied');await verifyExact();
+  const landingCalls=requests.length;await page.goBack();await page.goForward();check(requests.length===landingCalls,'Landing history re-submitted input');
   const results=[];
   for(const width of [320,360,390,412,768,1440]){
     await page.setViewportSize({width,height:900});await page.goto(origin+'/');await page.evaluate(()=>document.fonts.ready);
@@ -60,6 +65,7 @@ export async function verifyProductBrowser(page,origin,artifacts){
   const codes=responses.at(-1).reasons.map(x=>x.code).join(',');
   if(!await page.locator('#plain-language').evaluate(e=>e.open))await page.locator('#plain-language > summary').click();await record(()=>page.locator('[data-lang="pcm"]').click());await page.waitForFunction(()=>document.querySelector('#finding-title').textContent==='Some warning signs dey'&&!document.querySelector('#send-button').disabled);await verifyExact();
   check(responses.at(-1).reasons.map(x=>x.code).join(',')===codes,'Language changed indicators');
+  await capture('pidgin',1440);await page.setViewportSize({width:390,height:900});await capture('pidgin',390);await page.setViewportSize({width:1440,height:900});
   await record(()=>page.locator('[data-lang="en"]').click());await page.waitForFunction(()=>document.querySelector('#finding-title').textContent==='Suspicious signals'&&!document.querySelector('#send-button').disabled);
   await page.locator('#explanation-options > summary').click();const count=requests.length;await page.locator('#ai-explanation').check();check(requests.length===count,'AI checkbox made an automatic request');
   await record(()=>page.locator('#explain-result').click());await page.waitForFunction(()=>!document.querySelector('#send-button').disabled&&document.querySelector('#result-method').textContent.includes('AI unavailable'));
@@ -76,13 +82,14 @@ export async function verifyProductBrowser(page,origin,artifacts){
   await page.locator('#message-input').fill(secret);await page.locator('#send-button').click();check(await page.locator('#send-button').isDisabled(),'Loading duplicate guard missing');await page.locator('#request-error').waitFor({state:'visible'});check(await page.locator('#message-input').inputValue()===secret,'Error lost draft');check(await page.locator('#evidence-result').isHidden(),'Error retained stale finding');await page.locator('#retry-check').click();await page.waitForFunction(()=>!document.querySelector('#send-button').disabled&&!document.querySelector('#evidence-result').hidden);
   check(!page.url().includes('redesign-private-fixture')&&await page.evaluate(()=>![JSON.stringify(history.state),JSON.stringify(localStorage),JSON.stringify(sessionStorage)].some(x=>x.includes('redesign-private-fixture'))),'Private input persisted');
   check(!(await page.locator('#evidence-result').textContent()).includes('redesign-private-fixture'),'Private query exposed in report');
-  await page.locator('#new-check').click();await page.locator('#message-input').focus();await page.keyboard.press('Tab');check(await page.evaluate(()=>document.activeElement.id)==='mic-button','Primary keyboard path unclear');
+  await page.locator('#new-check').click();await page.locator('#message-input').focus();await page.keyboard.press('Tab');check(await page.evaluate(()=>document.activeElement.id)==='send-button','Primary keyboard path unclear');
   await page.locator('#voice-options > summary').click();await page.locator('#read-aloud').check();
   await scan('https://example.org');await page.waitForFunction(()=>window.__reviewSpoken===2);check(await page.locator('#stop-result-audio').isVisible(),'Explicit automatic playback has no Stop control');await page.locator('#stop-result-audio').click();await edit();await page.locator('#read-aloud').uncheck();
   await page.getByRole('link',{name:'FAQ',exact:true}).click();await page.locator('#faq summary').first().focus();await page.keyboard.press('Enter');check(await page.locator('#faq details').first().evaluate(e=>e.open),'Keyboard FAQ failed');
   await page.locator('#preview-example').click();await page.waitForFunction(()=>!document.querySelector('#preview-result').hidden&&!document.querySelector('#preview-example').disabled);check(await page.locator('#preview-host').textContent()==='unrelated.example','Preview did not use actual analyzer');
   await page.evaluate(()=>scrollTo({top:0,behavior:'instant'}));await page.screenshot({path:`${artifacts}/live-preview-desktop.png`,fullPage:true});
+  for(const [kind,status] of [['message','suspicious'],['ordinary','unverified'],['advisory','known-phishing']]){await record(()=>page.locator(`[data-preview="${kind}"]`).click());check(responses.at(-1).status===status,'Example invented a finding');check(await page.locator('#preview-verdict').textContent()===responses.at(-1).label,'Preview changed actual label');}
   for(const path of ['/fonts/lato-regular.ttf','/fonts/lato-bold.ttf'])check((await page.request.get(origin+path)).status()===200,'Local font missing');
   check(external.length===0,'Unexpected external navigation/service');check(errors.length===0,errors.join('; '));
-  return {browser:'real Chromium',viewports:results,controlledFixtures:5,languagePreservesIndicators:true,AI:'explicit opt-in; actual prepared fallback, no live key',audio:'mocked playback; explicit Listen, opt-in automatic reading and Stop',questionDraftPreserved:true,noNestedScroll:true,voicePermission:'mocked denial restored typing',errorAndRetry:true,privateInput:true,keyboard:true,realPreview:true,externalRequests:external,financialRequests:0,pageErrors:errors};
+  return {browser:'real Chromium',viewports:results,controlledFixtures:5,languagePreservesIndicators:true,AI:'explicit opt-in; actual prepared fallback, no live key',audio:'mocked playback; explicit Listen, opt-in automatic reading and Stop',questionDraftPreserved:true,noNestedScroll:true,voicePermission:'mocked denial restored typing',errorAndRetry:true,privateInput:true,keyboard:true,realPreview:true,landingLanguageAndSubmission:true,externalRequests:external,financialRequests:0,pageErrors:errors};
 }

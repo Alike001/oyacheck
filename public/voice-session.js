@@ -28,7 +28,7 @@ export function createVoiceSession({env=window, render, transcript, getLanguage,
   const accept=async(text,id)=>{
     if(id!==epoch)return;
     if(typeof text!=='string'||!text.trim()||text.length>2000){fail(id,'No usable speech recognised. Try again, or type your message.');return;}
-    update('stopped','Transcript ready. Review the words and remove private details before checking.');
+    update('reviewing','Transcript ready. Review the words and remove private details before checking.');
     await transcript(text,id);
   };
   async function transcribe(blob,id){
@@ -137,7 +137,12 @@ export function createVoiceSession({env=window, render, transcript, getLanguage,
     try{env.speechSynthesis.speak(speech);}catch{speech.onerror();}
   }
   return {start,stop,cancel,speak,stopSpeech,
-    configure(value){configured=value===true;available=true;if(!active()&&state==='ready')update('ready',configured?'Ready. Tap Speak, then review your transcript before checking.':'Browser speech fallback. Permission, network and Pidgin support vary. Type if it fails.');},
+    configure(value){
+      configured=value===true;available=true;if(active()||state!=='ready')return;
+      if(!configured&&!env.SpeechRecognition&&!env.webkitSpeechRecognition){update('error','Speech input is unavailable here: server transcription is not configured and this browser has no recognition API. You can still type.');return;}
+      if(configured&&(!env.navigator.mediaDevices?.getUserMedia||!env.MediaRecorder)){update('error','Server transcription is configured but this browser cannot record audio. You can still type.');return;}
+      update('ready',configured?'Ready. Tap Speak, then review your transcript before checking.':'Browser speech fallback. Permission, network and Pidgin support vary. Type if it fails.');
+    },
     availabilityFailed(){available=false;update('error','Voice availability could not be checked. Reload or type instead.');},
     setBusy(value){busy=value;if(value)update('analyzing','Examining the text and address. No submitted website is opened.');else if(state==='analyzing')update('ready','Ready for your next action. Read any findings or errors below.');},
   };
