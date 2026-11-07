@@ -8,6 +8,10 @@ import { chatReply } from './lib/chat.mjs';
 import { generalReply } from './lib/general.mjs';
 import { sandboxEnabled, isLocalRequest, obtainQuote, inspectPaidSource, getScreenshot, budgetStatus } from './lib/buy-browser.mjs';
 import {audioExtension, keyIsConfigured, readAudio, transcribeAudio, MAX_AUDIO_BYTES} from './lib/voice.mjs';
+import { DEMO_SCENARIOS, fixtureFor, scenarioValid } from './lib/demo-inspection.mjs';
+import { inspectSyntheticPage, chromiumBinary } from './lib/demo-browser.mjs';
+import { demoReply } from './lib/demo-conversation.mjs';
+import { randomBytes } from 'node:crypto';
 
 const ROOT = fileURLToPath(new URL('./public/', import.meta.url));
 const PUBLIC_FILES = new Map([
@@ -21,6 +25,16 @@ const PUBLIC_FILES = new Map([
 ]);
 const PORT = Number(process.env.PORT || 4173);
 const RATE = new Map();
+const DEMO_RESULTS = new Map();
+const DEMO_SCREENSHOTS = new Map();
+let demoBusy = false;
+function demoAllowed(ip) { return process.env.OYACHECK_DEMO_BROWSER === '1' && isLocalRequest(ip); }
+function removeExpiredDemoEntries(){
+  const now=Date.now();
+  for (const [k,v] of DEMO_SCREENSHOTS) if(v.expires<now) DEMO_SCREENSHOTS.delete(k);
+  for (const [k,v] of DEMO_RESULTS) if(v.expires<now) DEMO_RESULTS.delete(k);
+}
+
 function securityHeaders() {
   return {
     'X-Content-Type-Options':'nosniff',
@@ -39,7 +53,7 @@ function respond(res, status, obj) {
 function rateAllowed(ip, group) {
   const now = Date.now();
   const key = `${ip}:${group}`;
-  const cap = group === 'voice' ? 4 : group === 'ai-chat' || group === 'general-chat' ? 12 : group === 'ai' ? 10 : 45;
+  const cap = group === 'voice' ? 4 : group === 'ai-chat' || group === 'general-chat' ? 12 : group === 'ai' ? 10 : group === 'demo' ? 4 : 45;
   let bucket = RATE.get(key);
   if (!bucket || now-bucket.start > 60_000) bucket = {start:now,count:0};
   bucket.count++;
@@ -70,7 +84,58 @@ const server = http.createServer(async (req,res)=>{
   if(origin && origin !== expected && origin !== `http://${req.headers.host}` && origin !== `https://${req.headers.host}`) {
     respond(res,403,{error:'Cross-origin request blocked'});return;
   }
-  if(req.method==='GET' && u.pathname==='/api/health') {respond(res,200,{ok:true,version:'0.9.0',voiceTranscription:keyIsConfigured(),browserSpeechPlayback:'client',browserInspection:false,sourceInspectionSandboxEnabled:sandboxEnabled()&&isLocalRequest(ip),sandboxBudget:budgetStatus(),aiConfigured: /^gsk_[A-Za-z0-9_-]+$/.test(process.env.GROQ_API_KEY?.trim() || '')});return;}
+  if(req.method==='GET' && u.pathname==='/api/health') {respond(res,200,{ok:true,version:'0.10.0',voiceTranscription:keyIsConfigured(),browserSpeechPlayback:'client',browserInspection:false,sourceInspectionSandboxEnabled:sandboxEnabled()&&isLocalRequest(ip),sandboxBudget:budgetStatus(),localBrowserDemo:demoAllowed(ip),localBrowserAvailable:Boolean(chromiumBinary()),aiConfigured: /^gsk_[A-Za-z0-9_-]+$/.test(process.env.GROQ_API_KEY?.trim() || '')});return;}
+  // Local lab: ONLY fixed synthetic pages served by this app. No paid calls,
+  // no external URL input, no real form submission and no remote exposure.
+  if(u.pathname.startsWith('/_demo/') || u.pathname.startsWith('/api/demo/')) {
+    if(!demoAllowed(ip)){respond(res,403,{error:'Local demonstration is disabled'});return;}
+    if(req.method==='GET' && /^\/_demo\/page\/[a-z]+$/.test(u.pathname)) {
+      const scenario=u.pathname.split('/').at(-1);const sample=fixtureFor(scenario);
+      if(!sample){respond(res,404,{error:'Unknown controlled sample'});return;}
+      res.writeHead(sample.status,sample.headers);res.end(sample.body);return;
+    }
+    if(req.method==='POST' && u.pathname==='/api/demo/inspect') {
+      if(!rateAllowed(ip,'demo')){respond(res,429,{error:'Demonstration rate limited'});return;}
+      if(req.headers['content-type']?.split(';')[0]!=='application/json'){respond(res,415,{error:'Send JSON'});return;}
+      try {
+        const body=await readJSON(req);
+        if(typeof body.scenario!=='string'||!scenarioValid(body.scenario)){respond(res,400,{error:'Choose a supported controlled sample'});return;}
+        if(demoBusy){respond(res,409,{error:'One browser demonstration is already running'});return;}
+        demoBusy=true;
+        try {
+          const {report,screenshot}=await inspectSyntheticPage({scenario:body.scenario,port:server.address().port});
+          removeExpiredDemoEntries();
+          DEMO_RESULTS.set(ip,{report,expires:Date.now()+600000});
+          let screenshotId=null;
+          if(screenshot?.length && screenshot.length<=2*1024*1024){
+            screenshotId=randomBytes(20).toString('hex');
+            DEMO_SCREENSHOTS.set(screenshotId,{buf:screenshot,ip,expires:Date.now()+120000});
+          }
+          respond(res,200,{...report,screenshotId});
+        } finally {demoBusy=false;}
+      } catch(e) {if(!res.headersSent&&!res.destroyed)respond(res,503,{error:'Local browser demonstration unavailable: '+e.message});}
+      return;
+    }
+    if(req.method==='GET' && /^\/api\/demo\/screenshot\/[a-f0-9]{40}$/.test(u.pathname)) {
+      removeExpiredDemoEntries();const entry=DEMO_SCREENSHOTS.get(u.pathname.split('/').at(-1));
+      if(!entry||entry.ip!==ip){respond(res,404,{error:'Screenshot expired'});return;}
+      res.writeHead(200,{'Content-Type':'image/png',...securityHeaders()});res.end(entry.buf);return;
+    }
+    if(req.method==='POST' && u.pathname==='/api/demo/ask') {
+      if(!rateAllowed(ip,'ai-chat')){respond(res,429,{error:'Chat limit reached'});return;}
+      if(req.headers['content-type']?.split(';')[0]!=='application/json'){respond(res,415,{error:'Send JSON'});return;}
+      try{
+        removeExpiredDemoEntries();const latest=DEMO_RESULTS.get(ip);
+        if(!latest){respond(res,404,{error:'Run a controlled browser demonstration first'});return;}
+        const body=await readJSON(req);
+        if(typeof body.question!=='string'||body.question.length>450){respond(res,400,{error:'Invalid question'});return;}
+        const answer=await demoReply(latest.report,body.question,body.language,body.history);
+        respond(res,200,{answer,scope:latest.report.scope});
+      } catch {if(!res.headersSent&&!res.destroyed)respond(res,400,{error:'Invalid demonstration question'});}
+      return;
+    }
+    respond(res,404,{error:'Unknown demonstration route'});return;
+  }
   // User-initiated short audio. Raw audio is proxied to Groq Whisper only when
   // configured. Nothing is stored; never log bodies or provider credentials.
   if(req.method==='POST' && u.pathname==='/api/voice/transcribe') {

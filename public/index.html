@@ -53,6 +53,7 @@
                 <button type="button" data-example="Your device will be blocked today. Verify at secure-verifymydevice.ng" data-intent="scan"><span class="suggestion-icon">↗</span> Check a reported scam</button>
                 <button type="button" data-example="https://verifymydevice.gov.ng" data-intent="scan"><span class="suggestion-icon">✓</span> Check an official domain</button>
                 <button type="button" data-example="How can I tell if a message is phishing?" data-intent="ask"><span class="suggestion-icon">?</span> Ask a question</button>
+                <button id="demo-shortcut" type="button"><span class="suggestion-icon">◈</span> Browser lab</button>
               </div>
               <form id="check-form" class="composer" aria-label="Message the assistant">
                 <label class="sr-only" for="message-input">Link, forwarded message or question</label>
@@ -91,10 +92,25 @@
               <div class="report-limits"><strong><span class="limits-icon">ⓘ</span> What we haven't checked</strong><p id="scope-text">No live page inspection.</p></div>
               <button type="button" id="copy-report" class="copy-report">Copy evidence report <span aria-hidden="true">↗</span></button>
             </div>
+            <section class="demo-lab" id="demo-lab" aria-label="Local synthetic website investigation" hidden>
+              <div class="report-overline">BROWSER EVIDENCE LAB · LOCAL DEMO</div>
+              <h3>See what the browser actually finds</h3>
+              <p>Test controlled pages with fake data: no real phishing sites, no credentials, and <strong>no Celo payment</strong>. This does not evaluate a website you submit.</p>
+              <label for="demo-scenario">Choose a synthetic page</label>
+              <select id="demo-scenario">
+                <option value="credential">Urgent identity-verification form</option>
+                <option value="redirect">Redirect to that verification form</option>
+                <option value="login">Normal account login (context matters)</option>
+                <option value="ordinary">Ordinary information page</option>
+              </select>
+              <button id="demo-run" type="button">Inspect sample in Chromium ↗</button>
+              <p id="demo-progress" role="status" aria-live="polite">Ready for a free, controlled local inspection.</p>
+              <div id="demo-result" hidden aria-label="Observed browser evidence"></div>
+            </section>
             <div class="evidence-footer"><span class="read-only-dot"></span> Read-only check <span>·</span> No suspicious link opened</div>
           </aside>
         </div>
-        <div class="workspace-disclaimer"><span>✧</span> This is an early prototype with narrow source coverage and experimental Pidgin voice. We don't inspect submitted websites yet, and "unverified" never means "safe."</div>
+        <div class="workspace-disclaimer"><span>✧</span> This is an early prototype with narrow source coverage and experimental Pidgin voice. Only controlled training pages can be rendered in the local browser lab. We don't inspect submitted websites yet, and "unverified" never means "safe."</div>
       </section>
       <!-- Explicit, accessible payment approval: no browser-native confirm dialog. -->
       <dialog id="buy-confirm-dialog" class="payment-dialog" aria-labelledby="buy-dialog-title" aria-describedby="buy-dialog-description">
