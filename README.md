@@ -9,7 +9,8 @@ The assistant accepts links and forwarded messages, supplies deterministic evide
 Use Ubuntu terminal with Node 22+ and the installed `@celo/buy` CLI.
 
 ```zsh
-cd ~/Desktop/celo/official-link-agent
+git clone https://github.com/Alike001/oyacheck.git
+cd oyacheck
 npm run check
 npm test
 read -rs 'GROQ_API_KEY?Groq API key: '
@@ -33,7 +34,7 @@ For Groq in the same terminal, export `GROQ_API_KEY` before starting as above. O
 
 1. Click **Get free sandbox quote**. This retrieves the live **Celo Sepolia test USDC** price; it does not sign a payment.
 2. Read the quoted price. The server enforces a **maximum of 0.01 TEST USDC per purchase**, at most **three test purchases per server day**, and **0.02 TEST USDC total** per running process. All these limits are process-memory test protections, not a production billing system.
-3. Click **Approve ... test USDC** and confirm in the browser prompt. Only then will it purchase one 1-minute browser session. Session commands do not add further fees. There are **no automatic payment retries**.
+3. Click **Approve ... test USDC** and confirm in the in-app payment dialog. Only then will it purchase one 1-minute browser session. Session commands do not add further fees. There are **no automatic payment retries**.
 4. The browser is only permitted to open the exact official NCC-CSIRT advisory URL. It retrieves the final URL, title, source text and, if possible, a screenshot. The result presents the gateway transaction identifier and whether the page text actually mentions the examined hostname.
 5. For settlement confirmation, run separately: `buy --sandbox receipts --account sandbox --resolve`. Do not repurchase if a paid inspection is incomplete: check receipts first.
 
@@ -115,3 +116,16 @@ Next, the app sends the audio clip to the existing Groq Whisper transcription en
 **Practical acceptance test:** Start app with your Groq API key set in your shell; click Speak; say “How can I know if a link is fake?”; stop talking. After about 1.5 seconds of silence, it should end the recording, send, answer, and speak without a Stop or Send click. Then test Pidgin, an empty/noisy recording, a dictated URL (must remain editable), Auto-send unchecked, and a denied microphone permission. This adds no Celo payments.
 
 The app is still a limited evidence-based checking prototype. Unknown public websites are not rendered, and the Celo Buy integration remains sandbox-only and separately opt-in. Mainnet receipts, qualified independent users and ERC-8004 registration are still outstanding.
+
+
+## Verified integration milestone — November 7, 2026
+
+- 132 automated tests passed locally.
+- English and experimental Pidgin voice interaction tested locally.
+- Celo Buy sandbox browser purchase confirmed on Celo Sepolia.
+- Official NCC-CSIRT advisory opened in the rented browser.
+- Live page title, evidence match and screenshot retrieved.
+- Suspicious user-submitted website was not opened.
+- No qualifying Celo mainnet payment or ERC-8004 registration has been established by this test.
+
+The sandbox evidence does not prove unknown-site inspection or production readiness.
