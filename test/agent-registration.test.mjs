@@ -6,7 +6,7 @@ import { fromDataSuffix } from '@celo/attribution-tags';
 import { server } from '../server.mjs';
 import { OWNER_AGENT_WALLET, IDENTITY_REGISTRY, AGENT_URI } from '../lib/agent-identity.mjs';
 import { REGISTER, REGISTERED, TRANSFER, registrationTransaction, auditOwnedIdentities,
-  checkPublishedMetadata, verifyRegistrationReceipt, postRegistrationMetadata, readOnlyRPC, registrationPreview } from '../lib/agent-registration.mjs';
+  checkPublishedMetadata, verifyRegistrationReceipt, postRegistrationMetadata, readOnlyRPC, registrationPreview, registrationReceiptStatus } from '../lib/agent-registration.mjs';
 const metadata = JSON.parse(await readFile(new URL('../public/agent-registration.json',import.meta.url),'utf8'));
 const hash = '0x'+'a'.repeat(64), blockHash = '0x'+'b'.repeat(64);
 const address = '0x'+'2'.repeat(40);
@@ -145,4 +145,17 @@ test('simulation and oracle failures keep registration blocked',async()=>{
     assert.equal(result.registrationReady,false);
     assert.ok(result.gas.simulationError||result.gas.feeError);
   }
+});
+
+test('receipt recovery classifies pending, finality, failed and genuinely verified registration',async()=>{
+  const pending=fixture({eth_getTransactionReceipt:()=>null});assert.equal((await registrationReceiptStatus(pending.rpc,hash)).state,'pending');
+  const failed=fixture();failed.receipt.status='0x0';assert.equal((await registrationReceiptStatus(failed.rpc,hash)).state,'failed');
+  const waiting=fixture();waiting.receipt.blockNumber='0x101';assert.equal((await registrationReceiptStatus(waiting.rpc,hash)).state,'pending-finality');
+  const verified=await registrationReceiptStatus(fixture().rpc,hash);assert.equal(verified.state,'verified');assert.equal(verified.evidence.registration.agentId,7);
+});
+
+test('recovered final transaction must preserve the reviewed gas and fee caps',async()=>{
+  const f=fixture(),request={...registrationTransaction(),gas:'0x350ac',maxFeePerGas:'0x5db6de9900',maxPriorityFeePerGas:'0x9502f900'};
+  Object.assign(f.transaction,request);assert.equal((await registrationReceiptStatus(f.rpc,hash,request)).state,'verified');
+  f.transaction.maxFeePerGas='0x1';await assert.rejects(registrationReceiptStatus(f.rpc,hash,request),/gas\/fee fields differ/);
 });

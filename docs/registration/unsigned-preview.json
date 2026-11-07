@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-07T15:55:54.070Z",
+  "generatedAt": "2026-11-07T16:14:17.023Z",
   "network": "Celo mainnet",
   "agentURI": "https://oyacheck-beta.onrender.com/agent-registration.json",
   "transaction": {
@@ -30,9 +30,9 @@
     "chainId": 42220,
     "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
     "block": {
-      "number": "0x4e5bbe7",
-      "hash": "0xa86f4ea07c02b4d5fb6bd7cd086a26a9f6ee60c33cc722fc8e89075c4dd0ea8b",
-      "timestamp": "0x6aef443d"
+      "number": "0x4e5c067",
+      "hash": "0x2e079893b2efe97c3dbdc3d55392c2b1c9fc1a444c9f35730a475789e658a5e2",
+      "timestamp": "0x6aef48bd"
     },
     "currentOwnedCount": "0",
     "completeForCurrentOwnership": true,
@@ -40,8 +40,8 @@
     "receivingWalletOrHistoricalIdentitySearch": "Not covered by ERC-721 balanceOf; do not infer absence",
     "nativeCELOWei": "0",
     "latest": {
-      "block": "0x4e5c1af",
-      "blockHash": "0x48e7d7da40bda7cfd56b6b36c4fadc6a5284721accb72fe28e966d1c6169c247",
+      "block": "0x4e5c5fe",
+      "blockHash": "0xfac23688f13b17586d5fc2e8338bd6670855d12683c3b47689998e82d8758cbd",
       "currentOwnedCount": "0",
       "nativeCELOWei": "360000000000000000"
     }
@@ -64,8 +64,8 @@
     "feeCurrency": "native CELO (feeCurrency omitted)",
     "sufficientForIndicativeExecutionCost": true,
     "feeBudget": {
-      "block": "0x4e5c1af",
-      "blockHash": "0x48e7d7da40bda7cfd56b6b36c4fadc6a5284721accb72fe28e966d1c6169c247",
+      "block": "0x4e5c5fe",
+      "blockHash": "0xfac23688f13b17586d5fc2e8338bd6670855d12683c3b47689998e82d8758cbd",
       "baseFeePerGasWei": "200000000000",
       "maxPriorityFeePerGasWei": "2500000000",
       "maxFeePerGasWei": "402500000000",
@@ -83,5 +83,7 @@
     "limitations": "Time-bound planning reserve, not guaranteed total cost; refresh before any separate transaction approval."
   },
   "registrationReady": true,
-  "authorizedToSignOrBroadcast": false
+  "authorizedToSignOrBroadcast": false,
+  "calldataFingerprint": "sha256:3219716913a962aec107b29b62ebc6bdd8d037ffd79ea3c04b08a89f2227df01",
+  "transactionFingerprint": "sha256:c895acd4673689be17df6f78ed427d53b7c88450be472abb736b7da1fd2cf253"
 }

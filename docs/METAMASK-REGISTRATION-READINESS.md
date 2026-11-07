@@ -1,5 +1,9 @@
 # OyaCheck: fresh preregistration review
 
+Current follow-up: [final human-controlled checkpoint](FINAL-REGISTRATION-CHECKPOINT.md)
+adds two-stage review, the locked future sender and durable attempt recovery.
+The earlier controls and snapshot below describe the preceding checkpoint.
+
 Updated 2026-11-07. No signing, broadcast, registration, spending, push or
 deployment was performed in this check. Productiondeployment was performed
 by the owner; Render independently reports `4a1ab5bd57d4f2c7c8aa75f8a79e2b6d045b9b81`
