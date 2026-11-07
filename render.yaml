@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: oyacheck-beta
+    runtime: node
+    plan: free
+    buildCommand: npm ci --include=dev && npm run check && npm test
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: BUY_BROWSER_SANDBOX
+        value: "0"
+      - key: OYACHECK_DEMO_BROWSER
+        value: "0"
