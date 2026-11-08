@@ -90,7 +90,7 @@ function setBusy(busy) {
   voiceController?.setBusy(busy);
   input.disabled = busy;
   sendButton.textContent = busy ? 'Checking…' : checkMode==='ask' ? 'Ask question ↗' : checkMode==='message' ? 'Check message ↗' : 'Check link ↗';
-  for(const button of document.querySelectorAll('[data-check-mode], .lang-button'))button.disabled=busy;
+  for(const button of document.querySelectorAll('[data-check-mode], .lang-button, #suggestions button'))button.disabled=busy;
   form.setAttribute('aria-busy',String(busy));
   $('#new-chat').disabled=busy;
   $('#question-submit').disabled=busy;$('#question-input').disabled=busy;$('#explain-result').disabled=busy;
@@ -347,6 +347,7 @@ input.addEventListener('keydown',event=>{
 });
 suggestions.addEventListener('click',event=>{
   const chip=event.target.closest('button[data-example]');if(!chip)return;
+  if(isBusy||recordState)return;
   send(chip.dataset.example,chip.dataset.intent || 'auto');
 });
 for(const button of document.querySelectorAll('.lang-button')){
@@ -526,6 +527,7 @@ voiceController=createVoiceSession({
       for(const choice of dock.querySelectorAll('[data-session-language]'))choice.disabled=active||busy;
       renderSignal(dock,state,level,window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     }
+    for(const button of suggestions.querySelectorAll('button'))button.disabled=busy||active;
     sendButton.disabled=busy||active;
     document.querySelector('.landing-submit').disabled=busy||active;
     $('#stop-result-audio').hidden=!['preparing','speaking'].includes(state);

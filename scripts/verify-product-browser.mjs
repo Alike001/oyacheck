@@ -19,9 +19,10 @@ export async function verifyProductBrowser(page,origin,artifacts){
     if(r.method()!=='GET'){requests.push({path:u.pathname,body:r.postDataJSON()});if(!['/api/analyze','/api/chat','/api/ask'].includes(u.pathname))return route.abort();}
     return route.continue();
   });
-  const record=async action=>{const pending=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/analyze'&&r.status()===200);await action();responses.push(await(await pending).json());};
+  let lastAnalysis=0;
+  const record=async action=>{await new Promise(resolve=>setTimeout(resolve,Math.max(0,1450-(Date.now()-lastAnalysis))));lastAnalysis=Date.now();const pending=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/analyze'&&r.status()===200);await action();responses.push(await(await pending).json());};
   const fit=async width=>check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`Horizontal overflow at ${width}`);
-  const capture=async(name,width)=>{if(![390,1440].includes(width))return;await page.evaluate(()=>scrollTo({top:0,behavior:'instant'}));await page.screenshot({path:`${artifacts}/${name}-${width===1440?'desktop':'mobile'}.png`,fullPage:true,animations:'disabled'});};
+  const capture=async(name,width)=>{if(![320,390,1440].includes(width))return;await page.evaluate(()=>scrollTo({top:0,behavior:'instant'}));await page.screenshot({path:`${artifacts}/${name}-${width===1440?'desktop':width===390?'mobile':'320'}.png`,fullPage:true,animations:'disabled'});};
   const edit=async()=>{if(!await page.locator('#input-panel').evaluate(e=>e.open))await page.locator('#input-panel > summary').click();};
   const scan=async(value,mode='url')=>{await edit();await page.locator(`[data-check-mode="${mode}"]`).click();await page.locator('#message-input').fill(value);await record(()=>page.locator('#send-button').click());await page.waitForFunction(()=>!document.querySelector('#evidence-result').hidden&&!document.querySelector('#send-button').disabled);};
   const verifyExact=async()=>{
@@ -46,6 +47,12 @@ export async function verifyProductBrowser(page,origin,artifacts){
     await page.goto(origin+'/app');await capture('checker',width);
     check(await page.locator('[data-check-mode]').count()===2,'Primary checker has competing modes');
     check(await page.locator('#voice-options').evaluate(e=>!e.open)&&await page.locator('#question-panel').evaluate(e=>!e.open),'Advanced tools not optional');
+    for(const [name,mode,status,host] of [['Bank message','message','suspicious',null],['Misleading URL','url','suspicious','unrelated.example'],['Harmless message','message','unverified',null]]){
+      const chip=page.getByRole('button',{name:new RegExp(name)});check(await chip.isVisible(),'Example hidden: '+name);
+      await chip.focus();await record(()=>page.keyboard.press('Enter'));await page.waitForFunction(()=>!document.querySelector('#send-button').disabled&&!document.querySelector('#evidence-result').hidden);
+      const data=responses.at(-1);check(data.analysisKind===(mode==='message'?'message':'url')&&data.status===status&&data.host===host,'Example changed mode or invented finding: '+name);await verifyExact();await fit(width);
+      await page.locator('#new-check').click();
+    }
     await scan('https://example.org@unrelated.example/account');await verifyExact();await fit(width);
     check(await page.locator('#finding-host').textContent()==='unrelated.example','Userinfo confused destination');
     check(!await page.locator('#input-panel').evaluate(e=>e.open),'Result competes with expanded editor');
@@ -74,6 +81,12 @@ export async function verifyProductBrowser(page,origin,artifacts){
   await edit();await page.locator('#message-input').fill('https://example.org/unsent-draft');await page.locator('#question-panel > summary').click();await page.locator('#question-input').fill('What was not checked?');await page.locator('#question-submit').click();await page.waitForFunction(()=>!document.querySelector('#question-submit').disabled&&document.querySelectorAll('.chat-message.assistant').length>0);
   check(await page.locator('#message-input').inputValue()==='https://example.org/unsent-draft','Chat overwrote checker draft');
   check(await page.locator('#chat-stream').evaluate(e=>getComputedStyle(e).overflowY==='visible'&&getComputedStyle(e).maxHeight==='none'),'Nested conversation scroll');
+  await page.locator('#technical-details > summary').click();
+  await page.context().grantPermissions(['clipboard-read','clipboard-write']);await page.locator('#copy-report').click();
+  await page.waitForFunction(()=>document.querySelector('#copy-report').textContent.includes('Copied'));
+  const copied=await page.evaluate(()=>navigator.clipboard.readText());check(copied.includes(responses.at(-1).label)&&copied.includes(responses.at(-1).reasons[0].text),'Copy lost actual evidence');
+  await edit();await page.locator('#message-input').fill('An unsent edit');const backCalls=requests.length;await page.locator('#back-to-result').click();
+  check(!await page.locator('#input-panel').evaluate(e=>e.open)&&requests.length===backCalls,'Back to result submitted draft');await page.locator('#input-panel > summary').click();check(await page.locator('#message-input').inputValue()==='An unsent edit','Edit draft lost');
   await page.locator('#new-check').click();await page.locator('#mic-button').click();check((await page.locator('#voice-status').textContent()).includes('unavailable'),'Missing voice availability state');
   await page.evaluate(()=>Object.defineProperty(window,'SpeechRecognition',{configurable:true,value:class{start(){queueMicrotask(()=>{this.onerror({error:'not-allowed'});this.onend();});}stop(){this.onend();}}}));
   await page.locator('#mic-button').click();await page.waitForFunction(()=>document.querySelector('#voice-status').textContent.includes('not-allowed'));check(await page.locator('#send-button').isEnabled(),'Permission failure blocked typing');
@@ -91,5 +104,5 @@ export async function verifyProductBrowser(page,origin,artifacts){
   for(const [kind,status] of [['message','suspicious'],['ordinary','unverified'],['advisory','known-phishing']]){await record(()=>page.locator(`[data-preview="${kind}"]`).click());check(responses.at(-1).status===status,'Example invented a finding');check(await page.locator('#preview-verdict').textContent()===responses.at(-1).label,'Preview changed actual label');}
   for(const path of ['/fonts/lato-regular.ttf','/fonts/lato-bold.ttf'])check((await page.request.get(origin+path)).status()===200,'Local font missing');
   check(external.length===0,'Unexpected external navigation/service');check(errors.length===0,errors.join('; '));
-  return {browser:'real Chromium',viewports:results,controlledFixtures:5,languagePreservesIndicators:true,AI:'explicit opt-in; actual prepared fallback, no live key',audio:'mocked playback; explicit Listen, opt-in automatic reading and Stop',questionDraftPreserved:true,noNestedScroll:true,voicePermission:'mocked denial restored typing',errorAndRetry:true,privateInput:true,keyboard:true,realPreview:true,landingLanguageAndSubmission:true,externalRequests:external,financialRequests:0,pageErrors:errors};
+  return {browser:'real Chromium',viewports:results,controlledFixtures:5,languagePreservesIndicators:true,AI:'explicit opt-in; actual prepared fallback, no live key',audio:'mocked playback; explicit Listen, opt-in automatic reading and Stop',questionDraftPreserved:true,noNestedScroll:true,voicePermission:'mocked denial restored typing',errorAndRetry:true,privateInput:true,keyboard:true,realPreview:true,examples:'all three, keyboard-triggered at six widths; actual API labels/modes/hosts',clipboard:true,editAndBack:true,landingLanguageAndSubmission:true,externalRequests:external,financialRequests:0,pageErrors:errors};
 }
