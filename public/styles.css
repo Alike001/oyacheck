@@ -81,3 +81,25 @@
 .payment-dialog-cancel:hover{background:#f1f7f0}
 @media(max-width:510px){.payment-dialog{border-radius:18px}.payment-dialog-body{padding:10px 17px 13px}.payment-dialog-head{padding:15px 17px 0}.payment-dialog-actions{padding:14px 17px 19px;flex-direction:column-reverse}.payment-dialog-body h2{font-size:22px}}
 @media(prefers-reduced-motion:reduce){.payment-dialog::backdrop{backdrop-filter:none}}
+
+/* Local Chromium training lab: deliberately separate from the paid NCC source check. */
+.demo-lab{margin:18px 23px 20px;padding:18px;border:1px solid #bdd9c5;border-radius:18px;background:#f5faf4;color:#19493a}
+.demo-lab h3{margin:12px 0 7px;font-size:19px;letter-spacing:-.4px}
+.demo-lab>p{color:#577265;font-size:12px;line-height:1.55}
+.demo-lab label{display:block;font-size:11px;font-weight:850;margin-top:14px;margin-bottom:6px}
+.demo-lab select{width:100%;background:#fff;border:1px solid #c3d8c8;color:#174d3c;border-radius:10px;padding:11px;font:inherit;font-size:12px}
+.demo-lab button{font:inherit;font-weight:800;background:#1e5544;color:#fff;border:1px solid #1e5544;border-radius:11px;padding:11px 14px;font-size:12px;margin-top:10px;cursor:pointer}
+.demo-lab button:disabled{opacity:.55;cursor:not-allowed}
+.demo-lab button:focus-visible,.demo-lab select:focus-visible{outline:3px solid #65b587;outline-offset:3px}
+.demo-lab #demo-progress{font-size:12px;color:#47705d;line-height:1.5}
+#demo-result{margin-top:12px;padding:13px;border:1px solid #ccddce;background:white;border-radius:13px;overflow-wrap:anywhere;font-size:12px;line-height:1.55}
+#demo-result p{margin:8px 0}
+#demo-result .demo-scope{color:#667f71;font-size:11px;border-top:1px solid #dbe6dd;padding-top:8px}
+#demo-result img{display:block;width:100%;max-height:270px;object-fit:contain;margin-top:12px;border:1px solid #d7e5da;border-radius:10px}
+@media(max-width:510px){.demo-lab{margin:12px 14px 16px;padding:15px}}
+
+/* Keep Send and microphone controls reachable on narrow phones. */
+@media(max-width:510px){.composer-bottom{flex-wrap:wrap}.send-controls{margin-left:auto}}
+
+#mainnet-investigation{margin:18px 23px;overflow-wrap:anywhere;font-size:12px}#mainnet-plan p,#mainnet-result p{margin:8px 0}#mainnet-result{border-top:1px solid #c4d7ca;padding-top:10px}
+@media(max-width:510px){#mainnet-investigation{margin:12px 14px}}

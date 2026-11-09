@@ -115,7 +115,7 @@ Next, the app sends the audio clip to the existing Groq Whisper transcription en
 
 **Practical acceptance test:** Start app with your Groq API key set in your shell; click Speak; say “How can I know if a link is fake?”; stop talking. After about 1.5 seconds of silence, it should end the recording, send, answer, and speak without a Stop or Send click. Then test Pidgin, an empty/noisy recording, a dictated URL (must remain editable), Auto-send unchecked, and a denied microphone permission. This adds no Celo payments.
 
-The app is still a limited evidence-based checking prototype. Unknown public websites are not rendered, and the Celo Buy integration remains sandbox-only and separately opt-in. Mainnet receipts, qualified independent users and ERC-8004 registration are still outstanding.
+The app is still a limited evidence-based checking prototype. Unknown public websites are not rendered. The existing sandbox flow stays separately opt-in; the new mainnet operator pilot is disabled by default and requires separate financial approval. Mainnet receipts, qualified independent users and ERC-8004 registration are still outstanding.
 
 
 ## Verified integration milestone — November 7, 2026
@@ -129,3 +129,9 @@ The app is still a limited evidence-based checking prototype. Unknown public web
 - No qualifying Celo mainnet payment or ERC-8004 registration has been established by this test.
 
 The sandbox evidence does not prove unknown-site inspection or production readiness.
+
+See the [current buy integration and readiness audit](docs/BUY-INTEGRATION-AUDIT.md) for verified historical sandbox payment evidence, the production baseline, local safety repairs, and remaining mainnet submission requirements.
+
+## Mainnet operator pilot — prepared, not activated
+
+The [mainnet release and single-purchase approval plan](docs/MAINNET-RELEASE-PLAN.md) documents the durable ledger, named-wallet requirements, local-only preparation flow, independent receipt reconciliation and verified mock financial tests. Browser review requests cannot execute payments. No genuine mainnet purchase was made during this preparation.

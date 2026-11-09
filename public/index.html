@@ -1,83 +1,63 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0d2d28">
-  <meta name="description" content="An interactive Nigerian link-safety assistant. Ask questions, examine evidence, and understand warnings in English or Pidgin.">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4d7c3">
+  <meta name="description" content="A second look at suspicious links and forwarded messages. Understand the warning signs in English or Nigerian Pidgin, with honest limits.">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/product.css">
   <script type="module" src="/app.js"></script>
-  <title>OyaCheck — Check before you click</title>
+  <title>OyaCheck — Check a link before you trust it</title>
 </head>
 <body>
-  <a class="skip" href="#assistant">Skip to assistant</a>
-  <div class="app-shell">
-    <header class="site-header">
-      <a href="/" class="brand" aria-label="OyaCheck home"><span class="brand-icon">✳</span><span>OyaCheck<span class="brand-country"> · beta</span></span></a>
-      <div class="header-mid"><span class="header-separator"></span><span>YOUR DIGITAL SECOND LOOK</span></div>
-      <div class="header-actions"><span class="privacy-chip"><span class="privacy-pulse"></span>Private by default</span><a class="header-about" href="#how">How it works <span aria-hidden="true">↗</span></a></div>
-    </header>
-
-    <main>
-      <section class="intro" aria-labelledby="intro-title">
-        <div class="intro-copy">
-          <div class="eyebrow"><span class="eyebrow-line"></span> AN ASSISTANT FOR THE LINKS THAT MAKE YOU PAUSE</div>
-          <h1 id="intro-title">Before you click,<br><em>OyaCheck.</em></h1>
-          <p>Got a strange message? An official-looking link? Ask a question or paste it here. We'll tell you what the evidence says — and what we can't confirm.</p>
-          <div class="intro-chips"><span>English + Pidgin</span><span>Talk or type</span><span>No account required</span></div>
-        </div>
-        <div class="intro-right" aria-label="How the assistant works">
-          <div class="intro-glow" aria-hidden="true"></div>
-          <div class="teaser-top"><span class="teaser-star">✺</span><span>YOUR SECOND LOOK</span><span class="teaser-live">EARLY ACCESS</span></div>
-          <div class="teaser-message"><span class="teaser-label">FORWARDED MESSAGE</span><p>"Your device will be blocked today. Verify now at secure-verifymydevice.ng"</p></div>
-          <div class="teaser-track" aria-hidden="true"><span></span><span></span><span></span></div>
-          <div class="teaser-result"><div class="teaser-alert">!</div><div><strong>Reported phishing domain</strong><span>Matched to a published NCC-CSIRT advisory</span></div><span class="teaser-check">✓</span></div>
-          <p class="teaser-note">A matching advisory is evidence. Unknown does not mean safe.</p>
-        </div>
+<a class="skip" href="#assistant">Skip to checker</a>
+<div class="app-shell">
+  <header class="site-header">
+    <a href="/" class="brand" aria-label="OyaCheck home"><span class="brand-icon" aria-hidden="true"><svg viewBox="0 0 40 40" aria-hidden="true" fill="none"><path d="M12 7H6v26h6M28 7h6v26h-6" stroke="currentColor" stroke-width="2.5"/><path d="m14 23 5 4 8-14" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>OyaCheck<span class="brand-country">Beta</span></span></a>
+    <nav class="main-nav" aria-label="Main navigation"><a href="/#product">Product</a><a href="/#how">How it works</a><a href="/#faq">FAQ</a><a href="/app" class="nav-app">Open checker <span aria-hidden="true">↗</span></a></nav>
+  </header>
+  <main>
+    <noscript><p class="noscript-note">The interactive checker needs JavaScript. No submitted website is opened.</p></noscript>
+    <section id="home-view" aria-labelledby="intro-title">
+      <section class="landing-hero">
+        <div class="sunset-scene" aria-hidden="true"><div class="sunset-sun"></div><div class="sunset-orbit orbit-one"></div><div class="sunset-orbit orbit-two"></div><div class="sunset-hill hill-back"></div><div class="sunset-hill hill-middle"></div><div class="sunset-hill hill-front"></div><span class="scene-note">A little pause can make all the difference.</span></div>
+        <div class="hero-copy"><p class="eyebrow"><span></span>A little clarity. A lot more confidence.</p><h1 id="intro-title">Check the link.<br><em>Know the signs.</em></h1><p class="hero-description">Not sure about a link or forwarded message?<br class="desktop-break"> OyaCheck helps you spot warning signs and understand what to do next.</p></div>
+        <form id="landing-form" action="/app" method="post" class="landing-check" aria-label="Start a link or message check">
+          <div class="input-modes" role="group" aria-label="What do you want to check?"><button type="button" data-landing-mode="url" aria-pressed="true">Check a link</button><button type="button" data-landing-mode="message" aria-pressed="false">Check a message</button></div>
+          <label for="landing-input" id="landing-label" class="sr-only">Paste the link</label><div class="hero-input-wrap"><span class="input-link-symbol" aria-hidden="true">↗</span><textarea id="landing-input" maxlength="2000" rows="1" placeholder="Paste a website address here…" aria-describedby="landing-guidance" spellcheck="false" autocapitalize="none" required></textarea>
+          <button class="landing-submit" type="submit">Check now <span aria-hidden="true">↗</span></button></div><p id="landing-guidance">One public URL or domain. We won’t open it.</p>
+          <div class="hero-samples" aria-label="Populate a real checker example"><span>Try an example</span><button type="button" data-landing-example="https://example.org@unrelated.example/account" data-mode="url">↗ A misleading link</button><button type="button" data-landing-example="Final notice: your bank account is blocked. Send your OTP immediately." data-mode="message">✉ An urgent bank message</button><button type="button" data-landing-example="Lunch is at noon. See you there." data-mode="message">☀ An everyday message</button></div>
+          <p class="form-privacy">No sign-up. No wallet. Just a clearer next step.</p><details class="secondary-voice landing-voice"><summary>Prefer to speak? <span>Optional voice input</span></summary><div class="voice-dock" data-voice-dock="landing" data-state="ready"><div class="session-language" role="group" aria-label="Check and speech language"><span>Your language</span><button type="button" data-session-language="en" aria-pressed="true">English</button><button type="button" data-session-language="pcm" aria-pressed="false">Naija Pidgin</button></div><div class="signal-presence"><svg class="signal-visual" viewBox="0 0 260 160" aria-hidden="true"><path class="signal-orbit" d="M93 18h74l36 36v52l-36 36H93l-36-36V54Z"/><path class="signal-inner" d="M103 36h54l28 28v32l-28 28h-54L75 96V64Z"/><path class="signal-frame" d="M63 30H41v100h22M197 30h22v100h-22"/><path class="signal-guide" d="M15 80h28m174 0h28M130 9v15m0 112v15"/><g class="signal-bars"><rect data-signal-bar="0" x="82" y="76" width="5" height="8" rx="2.5"/><rect data-signal-bar="1" x="95" y="76" width="5" height="8" rx="2.5"/><rect data-signal-bar="2" x="108" y="76" width="5" height="8" rx="2.5"/><rect data-signal-bar="3" x="121" y="76" width="5" height="8" rx="2.5"/><rect data-signal-bar="4" x="134" y="76" width="5" height="8" rx="2.5"/><rect data-signal-bar="5" x="147" y="76" width="5" height="8" rx="2.5"/><rect data-signal-bar="6" x="160" y="76" width="5" height="8" rx="2.5"/></g></svg><div class="voice-feedback"><strong data-voice-state>Ready</strong><span id="landing-voice-status" role="status">Checking voice availability. You can always type.</span></div></div><div class="voice-dock-actions"><button id="landing-mic" class="mic-button" type="button" aria-label="Speak a link or message" aria-pressed="false" aria-describedby="landing-voice-status"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg><span>Speak</span></button><button type="button" data-voice-cancel hidden>Cancel</button><span class="voice-turn-hint">You start. You stay in control.</span></div><div id="landing-voice-meter" class="voice-meter" hidden aria-label="Live microphone level"><span id="landing-voice-level"></span></div><p class="voice-disclosure">Audio may go to Groq or your browser provider. Review spoken links. Never speak private details.</p></div></details>
+        </form>
       </section>
-
-      <section class="main-workspace" id="assistant" aria-label="Interactive assistant and evidence workspace">
-        <div class="workspace-caption"><div class="workspace-title"><span class="workspace-index">01 / THE ASSISTANT</span><h2>Talk it through.</h2></div><p>Questions and links belong in the same conversation. The actual evidence stays visible beside it.</p></div>
+      <section class="product-section" id="product" aria-labelledby="product-title">
+        <div class="section-intro"><p class="section-kicker">A familiar name can hide an unfamiliar address.</p><h2 id="product-title">Look at where it leads.<br>Not just what it says.</h2><p>OyaCheck separates the actual hostname, warning signs and published evidence. You get a clearer next step — without visiting a suspicious website.</p><a href="/app" class="inline-link">Open the checker →</a></div>
+        <div class="live-preview" aria-label="Interactive product example"><div class="preview-heading"><span>Inside a check</span><span class="example-label">Controlled sample</span></div><p class="preview-address">https://example.org@<strong>unrelated.example</strong>/account</p><div id="preview-result" hidden aria-live="polite"><p id="preview-verdict"></p><span>Actual hostname</span><strong id="preview-host"></strong><p id="preview-note"></p></div><p id="preview-intro">The familiar name before “@” isn’t the destination. Run this illustrative address through the real checker.</p><button type="button" id="preview-example">Run the example <span aria-hidden="true">→</span></button><div class="preview-choices" aria-label="More real analyzer examples"><button type="button" data-preview="message">Try an OTP message</button><button type="button" data-preview="ordinary">Try an ordinary URL</button><button type="button" data-preview="advisory">Check a published advisory domain</button></div><p id="preview-status" role="status">An address example, not a prewritten threat verdict.</p></div>
+      </section>
+      <section class="steps-section" id="how" aria-labelledby="how-title"><div class="section-heading"><p class="section-kicker">Less guesswork. Three small steps.</p><h2 id="how-title">Pause. Check. Decide.</h2></div><ol class="steps-list"><li><span>01</span><h3>Paste it. Or say it.</h3><p>A link, a forwarded message, or a spoken description. Review your words; leave out passwords, OTPs and private details.</p></li><li><span>02</span><h3>Read the signs</h3><p>See the actual hostname, wording patterns and any match to our curated sources.</p></li><li><span>03</span><h3>Choose a careful next step</h3><p>Use the guidance. Confirm important requests through a channel you already trust.</p></li></ol></section>
+      <section class="language-limits" id="privacy"><div><p class="section-kicker">Your language. Your pace.</p><h2>Make it make sense.</h2><p>Switch between English and Nigerian Pidgin in your result. Read the explanation, listen if you prefer, or ask a follow-up. AI and voice are optional.</p><a class="inline-link" href="/app">Check a link →</a></div><div class="honest-limits"><h3>A useful check.<br>Not a safety certificate.</h3><p>We examine URL and message patterns, with additional intelligence from a small curated NCC advisory list. We don’t inspect live pages, verify senders or check every known scam.</p><p><strong>No known threat found never means safe.</strong> Your input goes to our server, but isn’t put in public links, analytics or browser storage. Optional AI and voice services have their own processing; never include secrets.</p></div></section>
+      <section class="language-preview-section" aria-labelledby="language-preview-title"><div class="section-intro"><p class="section-kicker">Familiar words. Clearer choices.</p><h2 id="language-preview-title">Good guidance.<br>In your language.</h2><p>English or Naija Pidgin, the evidence stays the same. Here’s a wording example—not an analysis of your message.</p></div><div class="language-preview-cards"><article><span>ENGLISH</span><p>“Pause before you share an OTP. Confirm the request through a channel you already trust.”</p><small>Prepared guidance · wording example</small></article><article lang="pcm"><span>NAIJA PIDGIN</span><p>“No rush share your OTP. Confirm the request through channel wey you already trust.”</p><small>The same advice, in familiar words</small></article></div></section>
+      <section class="source-section" id="evidence" aria-labelledby="source-title"><div class="source-badge" aria-hidden="true">↗</div><div><p class="section-kicker">Sources you can read for yourself</p><h2 id="source-title">Real evidence.<br>No mystery scores.</h2><p>For specific reported domains, we link to the original NCC-CSIRT advisory. A published threat report is different from a warning sign—and we show you which is which.</p><a href="https://csirt.ncc.gov.ng/index.php/resources/security-advisories/452-phishing-campaign-impersonating-official-verifymydevice-gov-ng-device-verification-portal" target="_blank" rel="noopener noreferrer">Read the NCC advisory <span aria-hidden="true">↗</span></a><small>Curated source coverage is limited. An unmatched link is not proven safe.</small></div><aside><span>PUBLIC PROJECT IDENTITY</span><strong>OyaCheck / 10051</strong><p>Registered ERC-8004 identity on Celo. Identity is not a guarantee of accuracy or safety.</p><a href="/agent-registration.json">View agent metadata ↗</a></aside></section>
+      <section class="faq-section" id="faq" aria-labelledby="faq-title"><div class="section-intro"><p class="section-kicker">Before you begin</p><h2 id="faq-title">A few good questions.</h2><a class="inline-link" href="/app">Open the checker →</a></div><div class="faq-list"><details><summary>Can I check links outside Nigeria?</summary><p>Yes. General URL and wording checks work independently of NCC. Nigerian advisories add narrow published evidence when a listed hostname matches.</p></details><details><summary>Will you open the link?</summary><p>No. We parse the address and text; we don’t visit the submitted site, follow redirects, inspect forms or download attachments. Broader paid website inspection is not supported.</p></details><details><summary>What if the message has no link?</summary><p>Choose Forwarded message. We can flag wording patterns such as urgency and mentions of sensitive information. We cannot verify the sender or whether a story is true.</p></details><details><summary>Do I need to pay or connect a wallet?</summary><p>No. The public checker needs neither. Paid features are disabled in the public beta. The separate local buy integration only refreshes a fixed NCC advisory with explicit authorization.</p></details></div></section>
+    </section>
+    <section id="app-view" hidden aria-labelledby="app-title">
+      <section class="main-workspace" id="assistant" aria-label="Link and forwarded-message checker">
+        <div class="workspace-caption"><p class="section-kicker">Pause with OyaCheck.</p><h1 id="app-title" tabindex="-1">What made you pause?</h1><p>Paste a link or message. We’ll help you make sense of the signs.</p></div>
         <div class="workspace-grid">
-          <section class="chat-panel" aria-label="Interactive safety assistant">
-            <div class="panel-header">
-              <div class="assistant-ident"><div class="assistant-avatar" aria-hidden="true">✳</div><div><strong>Your OyaCheck guide</strong><span>Ask, check, follow up</span></div></div>
-              <div class="panel-actions"><span id="ai-status" class="ai-status offline"><span></span>Checking AI…</span><button id="new-chat" class="icon-button" type="button" title="Start a new conversation" aria-label="Start new conversation">↺</button></div>
-            </div>
-            <div class="chat-stream" id="chat-stream" role="log" aria-live="polite" aria-label="Assistant conversation">
-              <div class="empty-welcome"><span class="welcome-orbit" aria-hidden="true">✳</span><span class="welcome-kicker">HELLO THERE</span><h3>What do you want to check?</h3><p>Paste a suspicious link, forward the message you received, or ask me a question about online safety.</p></div>
-            </div>
-            <div class="composer-zone">
-              <div class="suggestions" id="suggestions" aria-label="Try these examples">
-                <button type="button" data-example="Your device will be blocked today. Verify at secure-verifymydevice.ng" data-intent="scan"><span class="suggestion-icon">↗</span> Check a reported scam</button>
-                <button type="button" data-example="https://verifymydevice.gov.ng" data-intent="scan"><span class="suggestion-icon">✓</span> Check an official domain</button>
-                <button type="button" data-example="How can I tell if a message is phishing?" data-intent="ask"><span class="suggestion-icon">?</span> Ask a question</button>
-              </div>
-              <form id="check-form" class="composer" aria-label="Message the assistant">
-                <label class="sr-only" for="message-input">Link, forwarded message or question</label>
-                <textarea id="message-input" rows="2" maxlength="2000" placeholder="Paste a link, type a question or use the microphone…" required></textarea>
-                <div class="composer-bottom">
-                  <div class="language-toggle" role="group" aria-label="Response language"><button class="lang-button selected" type="button" data-lang="en" aria-pressed="true">English</button><button class="lang-button" type="button" data-lang="pcm" aria-pressed="false">Pidgin</button></div>
-                  <div class="send-controls"><span id="composer-hint">Link = check · Question = chat</span><button id="mic-button" class="mic-button" type="button" aria-label="Start recording a voice question" aria-pressed="false" title="Record a short voice question">🎙 <span>Speak</span></button><button id="send-button" type="submit">Send <span aria-hidden="true">↗</span></button></div>
-                </div>
-              </form>
-              <div class="voice-row"><div class="voice-settings"><label class="speak-setting"><input id="auto-voice" type="checkbox" checked> Auto-send voice questions</label><label class="speak-setting"><input id="read-aloud" type="checkbox" checked> Speak answers</label></div><span id="voice-status" role="status" aria-live="polite">Tap Speak once. Recording stops automatically after you finish talking; spoken links still require review.</span><div id="voice-meter" class="voice-meter" hidden aria-hidden="true"><span id="voice-level"></span></div></div>
-              <div class="voice-privacy">Recording starts only when you tap Speak. It stops after about 1.5 seconds of silence (or at 18 seconds); Stop is still available. Ordinary questions auto-send; detected URLs and private details need review. Audio is sent to Groq for transcription when configured. No recording is stored by OyaCheck. Device voices and Pidgin pronunciation vary.</div>
-              <div class="composer-note"><span>✧ No wallet or account needed</span><span>Never share passwords, OTPs, BVN or NIN</span></div>
-            </div>
-          </section>
-
-          <aside class="evidence-panel" aria-label="Latest link evidence">
-            <div class="evidence-heading"><span>EVIDENCE DESK</span><span class="evidence-indicator" id="evidence-indicator">NO CHECK YET</span></div>
-            <div class="evidence-content" id="evidence-empty"><div class="empty-illustration" aria-hidden="true"><div class="magnify-circle">⌕</div><span class="small-spark s1">✳</span><span class="small-spark s2">✧</span></div><h3>Facts over fear.</h3><p>When you share a link, we'll put the findings, the sources and the limits of our check right here.</p><div class="empty-lines" aria-hidden="true"><span></span><span></span><span></span></div></div>
-            <div class="evidence-content" id="evidence-result" hidden>
-              <div class="report-overline">CURRENT FINDING</div>
-              <div class="report-status"><span id="finding-icon" class="report-symbol">!</span><h3 id="finding-title">—</h3></div>
-              <div class="detail-block"><span>DOMAIN EXAMINED</span><strong id="finding-host">—</strong></div>
-              <div class="report-overline report-spacing">WHAT WE FOUND</div><ul class="reason-list" id="finding-reasons"></ul>
-              <div id="source-group" class="source-group" hidden><div class="report-overline">PUBLISHED EVIDENCE</div><div id="finding-sources"></div></div>
-              <div class="browser-investigation" id="browser-investigation" hidden>
+          <details id="input-panel" class="check-card" open><summary><span>Your check</span><strong id="input-summary">Edit your link or message</strong><span class="edit-label">Edit ↗</span></summary><div class="input-content">
+            <form id="check-form" action="/app" method="post" class="composer" aria-label="Check a link or forwarded message"><div class="input-modes app-modes" role="group" aria-label="Analysis mode"><button type="button" data-check-mode="url" aria-pressed="true">Link</button><button type="button" data-check-mode="message" aria-pressed="false">Forwarded message</button></div><label id="input-label" for="message-input">Paste the link</label><textarea id="message-input" rows="3" maxlength="2000" placeholder="Paste a website address here…" aria-describedby="input-guidance" spellcheck="false" autocapitalize="none" required></textarea><p id="input-guidance">One public HTTP(S) address. We won’t open it.</p><p id="request-error" role="alert" hidden></p><div class="composer-bottom"><button id="retry-check" type="button" hidden>Retry this check</button><button id="back-to-result" type="button" hidden>Back to result</button><button id="send-button" type="submit">Check this link →</button></div><p id="scan-progress" role="status" hidden>Examining the available signs…</p><details class="secondary-voice"><summary>Prefer to speak? <span>Optional · you can always type</span></summary><div class="voice-dock" data-voice-dock="app" data-state="ready"><div class="session-language" role="group" aria-label="Check and speech language"><span>Your language</span><button type="button" data-session-language="en" aria-pressed="true">English</button><button type="button" data-session-language="pcm" aria-pressed="false">Naija Pidgin</button></div><div class="signal-presence"><svg class="signal-visual" viewBox="0 0 260 160" aria-hidden="true"><path class="signal-orbit" d="M93 18h74l36 36v52l-36 36H93l-36-36V54Z"/><path class="signal-inner" d="M103 36h54l28 28v32l-28 28h-54L75 96V64Z"/><path class="signal-frame" d="M63 30H41v100h22M197 30h22v100h-22"/><path class="signal-guide" d="M15 80h28m174 0h28M130 9v15m0 112v15"/><g class="signal-bars"><rect data-signal-bar="0" x="82" y="76" width="5" height="8" rx="2.5"/><rect data-signal-bar="1" x="95" y="76" width="5" height="8" rx="2.5"/><rect data-signal-bar="2" x="108" y="76" width="5" height="8" rx="2.5"/><rect data-signal-bar="3" x="121" y="76" width="5" height="8" rx="2.5"/><rect data-signal-bar="4" x="134" y="76" width="5" height="8" rx="2.5"/><rect data-signal-bar="5" x="147" y="76" width="5" height="8" rx="2.5"/><rect data-signal-bar="6" x="160" y="76" width="5" height="8" rx="2.5"/></g></svg><div class="voice-feedback"><strong data-voice-state>Ready</strong><span id="voice-status" role="status">Checking voice availability. You can always type.</span></div></div><div class="voice-dock-actions"><button id="mic-button" class="mic-button" type="button" aria-label="Speak a link or message" aria-pressed="false" aria-describedby="voice-status"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg><span>Speak</span></button><button type="button" data-voice-cancel hidden>Cancel</button><span class="voice-turn-hint">You start. You stay in control.</span></div><div id="voice-meter" class="voice-meter" hidden aria-label="Live microphone level"><span id="voice-level"></span></div><p class="voice-disclosure">Audio may go to Groq or your browser provider. Review spoken links. Never speak private details.</p></div></details></form>
+            <div class="input-extras"><div class="examples"><p>Try a labelled example <span>Runs a real check</span></p><div class="suggestions" id="suggestions"><button type="button" data-example="Final notice: your bank account is blocked. Send your OTP immediately." data-intent="scan"><span aria-hidden="true">01</span> Bank message <span aria-hidden="true">↗</span></button><button type="button" data-example="https://example.org@unrelated.example/account" data-intent="scan"><span aria-hidden="true">02</span> Misleading URL <span aria-hidden="true">↗</span></button><button type="button" data-example="Lunch is at noon. See you there." data-intent="scan"><span aria-hidden="true">03</span> Harmless message <span aria-hidden="true">↗</span></button><button id="demo-shortcut" type="button" hidden>Local browser lab</button></div></div><details id="voice-options"><summary>Voice preferences &amp; privacy</summary><div class="voice-settings"><label><input id="auto-voice" type="checkbox"> Auto-send ordinary voice questions</label><label><input id="read-aloud" type="checkbox"> Automatically speak answers</label></div><p class="voice-privacy">Recording starts only when you choose Speak and stops after silence or 18 seconds. Spoken links and private details require review. Audio may be processed by Groq or your browser’s speech provider; OyaCheck does not store recordings. Device voices and Pidgin pronunciation vary. Physical transcription quality remains unverified; typing is always available.</p></details></div>
+          </div></details>
+          <section class="evidence-panel" aria-label="Latest check result">
+            <div id="evidence-empty" class="evidence-empty"><span class="empty-mark" aria-hidden="true">↗</span><h3>A little clarity starts here.</h3><p>Check your own link or try a labelled sample above. Warning signs are evidence, never a safety guarantee.</p></div>
+            <div id="evidence-result" class="result-card" hidden>
+              <div class="evidence-heading"><span>YOUR FINDING</span><span id="result-turn" hidden></span><span id="evidence-indicator">NO CHECK YET</span></div><div class="result-top"><span id="finding-icon" class="report-symbol" aria-hidden="true">?</span><h2 id="finding-title" tabindex="-1">—</h2></div><div class="result-host"><span id="finding-host-label">Domain examined</span><strong id="finding-host">—</strong></div><p id="result-summary"></p>
+              <div class="result-reasons"><h3>What stands out</h3><ul id="finding-reasons" class="reason-list"></ul></div><div class="next-step"><span aria-hidden="true">↗</span><div><h3>What to do now</h3><p id="next-step-text"></p></div></div>
+              <div id="source-group" hidden><h3>Published evidence</h3><div id="finding-sources"></div></div><div id="official-group" hidden><h3>Documented official destination</h3><a id="official-link" target="_blank" rel="noopener noreferrer"></a></div>
+              <details id="plain-language" class="result-explanation" open><summary>Explanation &amp; audio <span>English / Naija Pidgin</span></summary><div class="explanation-heading"><h3>In plain language</h3><div class="language-toggle" role="group" aria-label="Explanation language"><button class="lang-button selected" type="button" data-lang="en" aria-pressed="true">English</button><button class="lang-button" type="button" data-lang="pcm" aria-pressed="false">Naija Pidgin</button></div></div><p id="result-explanation"></p><div class="explanation-actions"><button type="button" id="listen-result">Listen to explanation</button><button type="button" id="stop-result-audio" hidden>Stop audio</button><span id="result-method">Prepared guidance</span></div><p id="result-audio-status" role="status"></p><details id="explanation-options"><summary>Optional AI explanation</summary><p>Only bounded findings are sent to Groq, not the original URL path or query. AI cannot change the deterministic result. Availability varies.</p><label class="ai-opt-in"><input type="checkbox" id="ai-explanation"> Use AI for the explanation</label><button type="button" id="explain-result">Update explanation</button></details></details>
+              <details id="technical-details"><summary>Evidence &amp; technical details</summary><div class="technical-body"><div class="detail-block"><span>Check time</span><time id="finding-time">—</time></div><p id="coverage-note"></p><h3>Complete deterministic findings</h3><ul id="technical-reasons"></ul><h3>What was not checked</h3><p id="scope-text"></p><button type="button" id="copy-report" class="copy-report">Copy evidence report</button>
+              <!-- Retained, gated local source inspection. -->
+                            <div class="browser-investigation" id="browser-investigation" hidden>
                 <div class="report-overline">LIVE OFFICIAL SOURCE CHECK · CELO BUY</div>
                 <p class="browser-explainer">Optionally rent a browser to inspect the published NCC advisory. This <strong>does not open or scan the suspicious link</strong>.</p>
                 <div class="browser-actions">
@@ -87,17 +67,44 @@
                 <p id="browser-progress" role="status" aria-live="polite">Browser spending is off by default.</p>
                 <div id="browser-output" hidden></div>
               </div>
-              <div id="official-group" class="official-group" hidden><div class="report-overline">OFFICIAL DESTINATION</div><a id="official-link" target="_blank" rel="noopener noreferrer"></a></div>
-              <div class="report-limits"><strong><span class="limits-icon">ⓘ</span> What we haven't checked</strong><p id="scope-text">No live page inspection.</p></div>
-              <button type="button" id="copy-report" class="copy-report">Copy evidence report <span aria-hidden="true">↗</span></button>
+
+              </div></details>
+              <button type="button" id="new-check" class="new-check">Check another link →</button>
             </div>
-            <div class="evidence-footer"><span class="read-only-dot"></span> Read-only check <span>·</span> No suspicious link opened</div>
-          </aside>
-        </div>
-        <div class="workspace-disclaimer"><span>✧</span> This is an early prototype with narrow source coverage and experimental Pidgin voice. We don't inspect submitted websites yet, and "unverified" never means "safe."</div>
+                        <section id="mainnet-investigation" class="browser-investigation" aria-label="Mainnet source investigation preparation" hidden>
+              <div class="report-overline">MAINNET SOURCE CHECK · OPERATOR REVIEW</div>
+              <p>Prepare a one-minute browser check of the published NCC advisory. The submitted website will not be opened. Requesting review does not authorize or send a payment.</p>
+              <div class="browser-actions">
+                <button id="mainnet-quote" type="button" disabled>Get mainnet quote</button>
+                <button id="mainnet-request" type="button" hidden>Request operator review</button>
+                <button id="mainnet-cancel" type="button" hidden>Cancel request</button>
+                <button id="mainnet-refresh" type="button" hidden>Refresh status</button>
+              </div>
+              <p id="mainnet-status" role="status" aria-live="polite">Check a link with published NCC evidence to prepare an investigation.</p>
+              <div id="mainnet-plan"></div>
+              <div id="mainnet-result" hidden></div>
+            </section>
+            <section class="demo-lab" id="demo-lab" aria-label="Local synthetic website investigation" hidden>
+              <div class="report-overline">BROWSER EVIDENCE LAB · LOCAL DEMO</div>
+              <h3>See what the browser actually finds</h3>
+              <p>Test controlled pages with fake data: no real phishing sites, no credentials, and <strong>no Celo payment</strong>. This does not evaluate a website you submit.</p>
+              <label for="demo-scenario">Choose a synthetic page</label>
+              <select id="demo-scenario">
+                <option value="credential">Urgent identity-verification form</option>
+                <option value="redirect">Redirect to that verification form</option>
+                <option value="login">Normal account login (context matters)</option>
+                <option value="ordinary">Ordinary information page</option>
+              </select>
+              <button id="demo-run" type="button">Inspect sample in Chromium ↗</button>
+              <p id="demo-progress" role="status" aria-live="polite">Ready for a free, controlled local inspection.</p>
+              <div id="demo-result" hidden aria-label="Observed browser evidence"></div>
+            </section>
+
+          </section>
+          <details id="question-panel" class="question-panel"><summary><span id="question-label">Have a safety question?</span><span aria-hidden="true">+</span></summary><div class="question-content"><p>Optional help with online safety or your latest result. Questions may be sent to Groq when configured; don’t include private details.</p><form id="question-form"><label for="question-input">Your question</label><textarea id="question-input" maxlength="450" rows="2" placeholder="What should I do next?" required></textarea><div class="question-actions"><label for="question-language">Reply in<select id="question-language"><option value="en">English</option><option value="pcm">Nigerian Pidgin</option></select></label><button id="question-submit" type="submit">Ask a question →</button></div></form><p id="question-error" role="alert" hidden></p><div id="chat-stream" role="log" aria-live="polite" aria-label="Optional conversation"></div><span id="ai-status" class="ai-status">Checking AI availability…</span></div></details>
+        </div><button id="new-chat" type="button" hidden>Start new check</button>
       </section>
-      <!-- Explicit, accessible payment approval: no browser-native confirm dialog. -->
-      <dialog id="buy-confirm-dialog" class="payment-dialog" aria-labelledby="buy-dialog-title" aria-describedby="buy-dialog-description">
+            <dialog id="buy-confirm-dialog" class="payment-dialog" aria-labelledby="buy-dialog-title" aria-describedby="buy-dialog-description">
         <div class="payment-dialog-head">
           <span class="payment-dialog-kicker"><span aria-hidden="true">✳</span> SECURE CHECKOUT</span>
           <button type="button" id="buy-dialog-close" class="payment-dialog-close" aria-label="Close payment review">×</button>
@@ -119,10 +126,8 @@
           <button type="button" id="buy-dialog-approve" class="payment-dialog-approve">Approve test payment</button>
         </div>
       </dialog>
-
-      <section class="how-section" id="how"><div class="how-heading"><span class="workspace-index">02 / HOW IT WORKS</span><h2>Less guessing. More clarity.</h2></div><div class="how-cards"><article><span class="how-num">01</span><h3>Send the message</h3><p>Paste a suspicious link or ask a safety question. Speak or type in English or Pidgin. Voice stops after a short pause and ordinary questions auto-send; spoken links require review.</p></article><article><span class="how-num">02</span><h3>Look at evidence</h3><p>Exact known-domain matches and URL warning signals are kept separate. Sources are cited when available.</p></article><article><span class="how-num">03</span><h3>Ask what happens next</h3><p>Follow up in the same conversation. AI explains the report but can't change the verdict or invent a page inspection.</p></article></div></section>
-    </main>
-    <footer class="footer"><span>OyaCheck <span class="footer-dot">✳</span></span><span>Built for careful decisions, not false certainty.</span><span>English / Pidgin · Early prototype</span></footer>
-  </div>
-</body>
-</html>
+    </section>
+  </main>
+  <footer class="footer"><a class="brand" href="/">OyaCheck</a><p>A clearer next step.<br>Not a false sense of safety.</p><nav aria-label="Project links"><a href="/#how">How it works</a><a href="/#privacy">Privacy &amp; limits</a><a href="https://github.com/Alike001/oyacheck" target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="/agent-registration.json">Agent metadata</a></nav><span>English / Pidgin · Public beta</span></footer>
+</div>
+</body></html>

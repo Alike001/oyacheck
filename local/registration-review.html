@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OyaCheck · Registration review</title><link rel="stylesheet" href="/review.css"><script type="module" src="/review.js"></script></head>
+<body><main><p>OYACHECK · LOCAL OPERATOR REVIEW</p><h1>Review the agent registration</h1>
+<p id="execution-policy">Checking local registration policy. No transaction popup opens automatically.</p>
+<p id="status" role="status">Loading saved preview…</p><button id="refresh">Refresh read-only checks</button>
+<dl id="details"></dl><h2>Exact unsigned request</h2><pre id="transaction"></pre>
+<h2>Stage 1 · Network and account review</h2><p>Network and account must match the preview. No network switch, signature or transaction authorization is requested here.</p>
+<label>Wallet extension <select id="provider"><option value="">Select MetaMask</option></select></label>
+<button id="recheck-wallet" disabled>Recheck MetaMask status · read-only</button>
+<label><input id="reviewed" type="checkbox"> I reviewed the network, wallet, registry, function, URI, fees and zero value. I want to request account access only.</label>
+<button id="connect" aria-describedby="stage1-help wallet" disabled>Check MetaMask account · no signing</button><p id="wallet" role="status">Connected wallet: not checked.</p>
+<p id="stage1-help" role="status" aria-live="polite">Loading review eligibility…</p>
+<button id="prepare-final" aria-describedby="stage1-help" disabled>Re-estimate and prepare final review</button>
+<section id="final-stage" hidden><h2>Stage 2 · Final transaction review</h2>
+<p>All fields above were refreshed for this step. Review the full calldata and maximum gas cost again. This review expires after 60 seconds.</p>
+<p>Full calldata fingerprint</p><pre id="calldata-fingerprint"></pre><p>Exact transaction fingerprint</p><pre id="plan-fingerprint"></pre>
+<label><input id="final-reviewed" type="checkbox"> I reviewed this exact transaction, fingerprint and maximum gas cost. No retry or additional registration is approved.</label>
+<p id="send-policy" role="status">Sending locked at this checkpoint.</p><button id="submit" disabled>Request one MetaMask confirmation · locked</button></section>
+<section id="recovery" hidden><h2>Existing attempt · recovery only</h2><p>Do not submit another registration. A missing or pending hash requires reconciliation in MetaMask Activity.</p><p id="recorded-hash" aria-live="polite"></p><pre id="recovery-status"></pre>
+<label>Original public transaction hash <input id="recovered-hash" type="text" autocomplete="off"></label><button id="attach-hash" disabled>Record recovered hash · no spending</button><button id="receipt" disabled>Check receipt · read-only</button></section>
+<p>Separate explicit human authorization is required to enable sending. After a genuine receipt exists, verification obtains the actual Registered agent ID, owner, metadata URI and receiving wallet.</p>
+</main></body></html>

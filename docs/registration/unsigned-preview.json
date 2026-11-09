@@ -1,0 +1,89 @@
+{
+  "generatedAt": "2026-11-07T17:23:24.567Z",
+  "network": "Celo mainnet",
+  "agentURI": "https://oyacheck-beta.onrender.com/agent-registration.json",
+  "transaction": {
+    "from": "0x9Ceaa6aBFb2bC1aC202f96496Cdc683d86Bc458a",
+    "to": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+    "value": "0x0",
+    "data": "0xf2c298be0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000003a68747470733a2f2f6f7961636865636b2d626574612e6f6e72656e6465722e636f6d2f6167656e742d726567697374726174696f6e2e6a736f6e00000000000063656c6f5f303365373661633734326337110080218021802180218021802180218021",
+    "chainId": "0xa4ec"
+  },
+  "preparedRequest": {
+    "from": "0x9Ceaa6aBFb2bC1aC202f96496Cdc683d86Bc458a",
+    "to": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+    "value": "0x0",
+    "data": "0xf2c298be0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000003a68747470733a2f2f6f7961636865636b2d626574612e6f6e72656e6465722e636f6d2f6167656e742d726567697374726174696f6e2e6a736f6e00000000000063656c6f5f303365373661633734326337110080218021802180218021802180218021",
+    "chainId": "0xa4ec",
+    "gas": "0x350ac",
+    "maxFeePerGas": "0x5db6de9900",
+    "maxPriorityFeePerGas": "0x9502f900"
+  },
+  "attribution": {
+    "codes": [
+      "celo_03e76ac742c7"
+    ],
+    "schemaId": 0
+  },
+  "audit": {
+    "wallet": "0x9Ceaa6aBFb2bC1aC202f96496Cdc683d86Bc458a",
+    "chainId": 42220,
+    "registry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+    "block": {
+      "number": "0x4e5d0e7",
+      "hash": "0xd6eb0b92f53d0c5f89f8b9691846d43ed6ed1a2e1745b9cee5749e59a02424cd",
+      "timestamp": "0x6aef593d"
+    },
+    "currentOwnedCount": "0",
+    "completeForCurrentOwnership": true,
+    "conclusion": "No identities currently owned by this wallet at this finalized snapshot",
+    "receivingWalletOrHistoricalIdentitySearch": "Not covered by ERC-721 balanceOf; do not infer absence",
+    "nativeCELOWei": "360000000000000000",
+    "latest": {
+      "block": "0x4e5d632",
+      "blockHash": "0x66800052d3bef02bd2720e78236358a3a6235f9c05f54d0f0854dbc6b1df42ca",
+      "currentOwnedCount": "0",
+      "nativeCELOWei": "360000000000000000"
+    }
+  },
+  "metadata": {
+    "published": true,
+    "url": "https://oyacheck-beta.onrender.com/agent-registration.json",
+    "status": 200,
+    "matchesReviewedMetadata": true
+  },
+  "simulation": {
+    "passed": true,
+    "scope": "eth_call of exact tagged register(string); predicted return value is not a genuine agent ID"
+  },
+  "gas": {
+    "estimate": "181050",
+    "priceWei": "202500000000",
+    "indicativeExecutionCostWei": "36662625000000000",
+    "simulationError": null,
+    "feeCurrency": "native CELO (feeCurrency omitted)",
+    "sufficientForIndicativeExecutionCost": true,
+    "feeBudget": {
+      "block": "0x4e5d632",
+      "blockHash": "0x66800052d3bef02bd2720e78236358a3a6235f9c05f54d0f0854dbc6b1df42ca",
+      "baseFeePerGasWei": "200000000000",
+      "maxPriorityFeePerGasWei": "2500000000",
+      "maxFeePerGasWei": "402500000000",
+      "gasLimit": "217260",
+      "gasBufferPercent": 20,
+      "feePolicy": "20% gas buffer; max(2 * current base fee + RPC priority fee, current gas price)",
+      "oracle": "0x420000000000000000000000000000000000000F",
+      "unsignedSizeBoundBytes": "679",
+      "l1FeeUpperBoundWei": "0",
+      "operatorFeeWei": "0",
+      "recommendedReserveWei": "87447150000000000",
+      "sufficientBalance": true
+    },
+    "feeError": null,
+    "limitations": "Time-bound planning reserve, not guaranteed total cost; refresh before any separate transaction approval."
+  },
+  "registrationReady": true,
+  "authorizedToSignOrBroadcast": false,
+  "calldataFingerprint": "sha256:3219716913a962aec107b29b62ebc6bdd8d037ffd79ea3c04b08a89f2227df01",
+  "transactionFingerprint": "sha256:c895acd4673689be17df6f78ed427d53b7c88450be472abb736b7da1fd2cf253"
+}

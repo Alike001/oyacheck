@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: oyacheck-beta
+    runtime: node
+    plan: free
+    buildCommand: npm ci --include=dev && npm run check && npm test && npm run release:check
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OYACHECK_READ_ONLY
+        value: "1"
+      - key: OYACHECK_AGENT_WALLET
+        value: "0x9Ceaa6aBFb2bC1aC202f96496Cdc683d86Bc458a"
+      - key: BUY_BROWSER_SANDBOX
+        value: "0"
+      - key: OYACHECK_DEMO_BROWSER
+        value: "0"
+      - key: OYACHECK_MAINNET_PREPARE
+        value: "0"
+      - key: OYACHECK_MAINNET_EXECUTE
+        value: "0"

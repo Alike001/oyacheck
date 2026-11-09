@@ -1,0 +1,223 @@
+{
+  "kind": "unpaid-public-contract",
+  "capturedAt": "2026-11-07T12:59:41.435502+00:00",
+  "source": "https://gateway.usebuy.ai/v1/catalog",
+  "catalog": {
+    "capabilities": [
+      {
+        "id": "browser.sessions.create",
+        "title": "Rent an isolated agent browser",
+        "description": "Start a disposable agent-browser session for a fixed number of minutes.",
+        "available": true,
+        "method": "POST",
+        "url": "https://gateway.usebuy.ai/v1/browser/sessions",
+        "platform": "browser",
+        "agent": {
+          "provider": "buy-browser-worker",
+          "agentId": 9894,
+          "agentRegistry": "eip155:42220:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+          "registration": "https://gateway.usebuy.ai/v1/providers/buy-browser-worker/agent-registration.json"
+        },
+        "inputSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "durationMinutes"
+          ],
+          "properties": {
+            "durationMinutes": {
+              "type": "integer",
+              "enum": [
+                1,
+                2,
+                3,
+                5,
+                10
+              ],
+              "description": "Paid session length in minutes, starting when the browser is ready."
+            }
+          }
+        },
+        "sandboxNetwork": "celo-sepolia",
+        "protocols": [
+          "x402-v1",
+          "x402-v2"
+        ],
+        "priceOptions": [
+          {
+            "durationMinutes": 1,
+            "usd": "0.003606",
+            "atomic": "3606",
+            "tokens": [
+              "USDC",
+              "USDT",
+              "USAT"
+            ]
+          },
+          {
+            "durationMinutes": 2,
+            "usd": "0.004212",
+            "atomic": "4212",
+            "tokens": [
+              "USDC",
+              "USDT",
+              "USAT"
+            ]
+          },
+          {
+            "durationMinutes": 3,
+            "usd": "0.004818",
+            "atomic": "4818",
+            "tokens": [
+              "USDC",
+              "USDT",
+              "USAT"
+            ]
+          },
+          {
+            "durationMinutes": 5,
+            "usd": "0.00603",
+            "atomic": "6030",
+            "tokens": [
+              "USDC",
+              "USDT",
+              "USAT"
+            ]
+          },
+          {
+            "durationMinutes": 10,
+            "usd": "0.00906",
+            "atomic": "9060",
+            "tokens": [
+              "USDC",
+              "USDT",
+              "USAT"
+            ]
+          }
+        ],
+        "pricingModel": "duration"
+      }
+    ],
+    "payment": {
+      "protocol": "x402",
+      "x402Version": 1,
+      "protocols": [
+        "x402-v1",
+        "x402-v2"
+      ],
+      "scheme": "exact",
+      "network": "celo",
+      "chainId": 42220,
+      "payTo": "0x20faAca5F980E29639A0FCC6dcA6988E18ed333B",
+      "tokens": [
+        {
+          "symbol": "USDC",
+          "asset": "0xcebA9300f2b948710d2653dD7B07f33A8B32118C",
+          "decimals": 6
+        },
+        {
+          "symbol": "USDT",
+          "asset": "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e",
+          "decimals": 6
+        },
+        {
+          "symbol": "USAT",
+          "asset": "0xD2ab3C9A02DBBAB236BfEC45D1d755DF4267F771",
+          "decimals": 6
+        }
+      ],
+      "pricingAuthority": "The 402 challenge for the exact request is authoritative."
+    }
+  },
+  "challenge": {
+    "x402Version": 1,
+    "accepts": [
+      {
+        "scheme": "exact",
+        "network": "celo",
+        "maxAmountRequired": "3606",
+        "resource": "https://gateway.usebuy.ai/v1/browser/sessions",
+        "description": "Rent an isolated agent browser through buy-gateway",
+        "mimeType": "application/json",
+        "payTo": "0x20faAca5F980E29639A0FCC6dcA6988E18ed333B",
+        "maxTimeoutSeconds": 300,
+        "asset": "0xcebA9300f2b948710d2653dD7B07f33A8B32118C",
+        "extra": {
+          "name": "USDC",
+          "version": "2",
+          "gateway": {
+            "capability": "browser.sessions.create",
+            "provider": "buy-browser-worker",
+            "pricingModel": "duration",
+            "durationMinutes": 1
+          }
+        }
+      },
+      {
+        "scheme": "exact",
+        "network": "celo",
+        "maxAmountRequired": "3606",
+        "resource": "https://gateway.usebuy.ai/v1/browser/sessions",
+        "description": "Rent an isolated agent browser through buy-gateway",
+        "mimeType": "application/json",
+        "payTo": "0x20faAca5F980E29639A0FCC6dcA6988E18ed333B",
+        "maxTimeoutSeconds": 300,
+        "asset": "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e",
+        "extra": {
+          "name": "Tether USD",
+          "version": "1",
+          "gateway": {
+            "capability": "browser.sessions.create",
+            "provider": "buy-browser-worker",
+            "pricingModel": "duration",
+            "durationMinutes": 1
+          }
+        }
+      },
+      {
+        "scheme": "exact",
+        "network": "celo",
+        "maxAmountRequired": "3606",
+        "resource": "https://gateway.usebuy.ai/v1/browser/sessions",
+        "description": "Rent an isolated agent browser through buy-gateway",
+        "mimeType": "application/json",
+        "payTo": "0x20faAca5F980E29639A0FCC6dcA6988E18ed333B",
+        "maxTimeoutSeconds": 300,
+        "asset": "0xD2ab3C9A02DBBAB236BfEC45D1d755DF4267F771",
+        "extra": {
+          "name": "Tether America USD",
+          "version": "1",
+          "gateway": {
+            "capability": "browser.sessions.create",
+            "provider": "buy-browser-worker",
+            "pricingModel": "duration",
+            "durationMinutes": 1
+          }
+        }
+      },
+      {
+        "scheme": "exact",
+        "network": "celo-sepolia",
+        "maxAmountRequired": "3606",
+        "resource": "https://gateway.usebuy.ai/v1/browser/sessions",
+        "description": "Rent an isolated agent browser through buy-gateway (sandbox: Celo Sepolia test funds)",
+        "mimeType": "application/json",
+        "payTo": "0x20faAca5F980E29639A0FCC6dcA6988E18ed333B",
+        "maxTimeoutSeconds": 300,
+        "asset": "0x01C5C0122039549AD1493B8220cABEdD739BC44E",
+        "extra": {
+          "name": "USDC",
+          "version": "2",
+          "gateway": {
+            "capability": "browser.sessions.create",
+            "provider": "buy-browser-worker",
+            "pricingModel": "duration",
+            "sandbox": true,
+            "durationMinutes": 1
+          }
+        }
+      }
+    ],
+    "error": ""
+  }
+}

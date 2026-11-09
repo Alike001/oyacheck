@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { server } from '../server.mjs';
 import { once } from 'node:events';
+import { get } from 'node:http';
 
 // Tests run without Groq credentials, external requests, payment or blockchain.
 process.env.GROQ_API_KEY='';
@@ -12,7 +13,7 @@ test('health distinguishes link inspection from optional source inspection',asyn
   const r=await fetch(origin+'/api/health');assert.equal(r.status,200);assert.equal((await r.json()).browserInspection,false);
 });
 test('homepage works',async()=>{
-  const r=await fetch(origin+'/');assert.equal(r.status,200);const html=await r.text();assert.match(html,/Before you click/);assert.match(html,/Pidgin/);
+  const r=await fetch(origin+'/');assert.equal(r.status,200);const html=await r.text();assert.match(html,/Check a link/);assert.match(html,/Pidgin/);
 });
 test('javascript and CSS accessible with CSP',async()=>{
   const r=await fetch(origin+'/app.js');assert.equal(r.status,200);assert.match(r.headers.get('content-security-policy'),/script-src 'self'/);
@@ -86,9 +87,67 @@ test('voice policy module is served with security headers and no secrets',async(
   assert.match(r.headers.get('content-type'),/javascript/);
   assert.match(await r.text(),/voiceDecision/);
 });
-test('voice-first toggles are enabled by default',async()=>{
+test('voice automation remains optional and off by default',async()=>{
   const r=await fetch(origin+'/');
   const html=await r.text();
-  assert.match(html,/id="auto-voice" type="checkbox" checked/);
-  assert.match(html,/id="read-aloud" type="checkbox" checked/);
+  assert.match(html,/id="auto-voice" type="checkbox"/);
+  assert.doesNotMatch(html,/id="auto-voice" type="checkbox" checked/);
+  assert.match(html,/id="read-aloud" type="checkbox"/);
+  assert.doesNotMatch(html,/id="read-aloud" type="checkbox" checked/);
+});
+
+test('explicit message analysis supports harmless no-link text and timestamps without AI',async()=>{
+  const r=await fetch(origin+'/api/analyze',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({input:'See you at lunch tomorrow.',mode:'message',explain:false})});
+  const d=await r.json();assert.equal(r.status,200);assert.equal(d.analysisKind,'message');assert.equal(d.status,'unverified');assert.equal(d.host,null);assert.equal(d.explanation.method,'prepared-text');assert.ok(Number.isFinite(Date.parse(d.checkedAt)));
+});
+test('explicit URL analysis rejects message text and unsupported modes',async()=>{
+  const post=body=>fetch(origin+'/api/analyze',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+  assert.equal((await(await post({input:'Read https://example.org please',mode:'url',explain:false})).json()).status,'invalid');
+  assert.equal((await post({input:'https://example.org',mode:'browser'})).status,400);
+});
+
+test('direct app route and product styles retain security headers',async()=>{
+  const r=await fetch(origin+'/app');assert.equal(r.status,200);assert.match(r.headers.get('content-security-policy'),/connect-src 'self'/);const html=await r.text();assert.match(html,/id="app-view"/);assert.match(html,/id="landing-form" action="\/app" method="post"/);assert.doesNotMatch(html,/id="landing-input" name=/);
+  const css=await fetch(origin+'/product.css');assert.equal(css.status,200);assert.match(css.headers.get('content-type'),/text\/css/);
+});
+
+test('checker puts two input modes first and discloses supporting tools',async()=>{
+  const html=await(await fetch(origin+'/app')).text();
+  assert.equal([...html.matchAll(/data-check-mode=/g)].length,2);
+  for(const id of ['voice-options','technical-details','question-panel']){
+    assert.match(html,new RegExp('<details id="'+id+'"'));
+    assert.doesNotMatch(html,new RegExp('<details id="'+id+'"[^>]*\\sopen(?:\\s|>)'));
+  }
+  assert.match(html,/id="landing-input"[^>]+placeholder="Paste a website address here/);
+  assert.doesNotMatch(html,/id="landing-input"[^>]+placeholder="https?:/);
+});
+test('licensed self-hosted fonts are explicitly served with the existing CSP',async()=>{
+  for(const path of ['/fonts/lato-regular.ttf','/fonts/lato-bold.ttf']){
+    const r=await fetch(origin+path);assert.equal(r.status,200);assert.equal(r.headers.get('content-type'),'font/ttf');assert.match(r.headers.get('content-security-policy'),/font-src 'self'/);
+    const bytes=Buffer.from(await r.arrayBuffer());assert.equal(bytes.readUInt32BE(0),0x00010000);
+  }
+  assert.equal((await fetch(origin+'/fonts/../server.mjs')).status,404);
+});
+
+test('visible voice docks and controller retain opt-in review and security headers',async()=>{
+  const html=await(await fetch(origin+'/')).text();
+  for(const prefix of ['landing','app'])assert.match(html,new RegExp('data-voice-dock="'+prefix+'"'));
+  assert.match(html,/<details id="plain-language"[^>]* open/);
+  assert.match(html,/id="stop-result-audio" hidden/);
+  const r=await fetch(origin+'/voice-session.js');assert.equal(r.status,200);
+  assert.match(r.headers.get('content-security-policy'),/connect-src 'self'/);
+  assert.match(await r.text(),/createVoiceSession/);
+});
+test('voice diagnostics require explicit local opt-in and cannot be exposed on Render or remote Host',async()=>{
+  const oldFlag=process.env.OYACHECK_VOICE_DIAGNOSTICS,oldRender=process.env.RENDER;
+  const paths=['/voice-diagnostics','/voice-diagnostics.js','/voice-diagnostics.css','/api/voice/diagnostics'];
+  try{
+    delete process.env.OYACHECK_VOICE_DIAGNOSTICS;for(const path of paths)assert.equal((await fetch(origin+path)).status,403);
+    process.env.OYACHECK_VOICE_DIAGNOSTICS='1';
+    for(const path of paths){const r=await fetch(origin+path);assert.equal(r.status,200);assert.equal(r.headers.get('cache-control'),'no-store');assert.match(r.headers.get('content-security-policy'),/connect-src 'self'/);}
+    const d=await(await fetch(origin+'/api/voice/diagnostics')).json();assert.equal(d.credentialsConfigured,false);assert.equal(d.configurationOnly,true);assert.match(d.serverTranscriptionTest,/blocked/);assert.equal(d.recordingsStored,false);assert.deepEqual(Object.keys(d).sort(),['configurationOnly','credentialsConfigured','recordingsStored','serverTranscriptionTest']);
+    const remoteHostStatus=await new Promise((resolve,reject)=>{get(origin+'/api/voice/diagnostics',{headers:{Host:'external.example'}},r=>{r.resume();resolve(r.statusCode);}).on('error',reject);});assert.equal(remoteHostStatus,403);
+    assert.equal((await fetch(origin+'/voice-diagnostics',{method:'POST'})).status,405);
+    process.env.RENDER='true';for(const path of paths)assert.equal((await fetch(origin+path)).status,403);
+  }finally{if(oldFlag===undefined)delete process.env.OYACHECK_VOICE_DIAGNOSTICS;else process.env.OYACHECK_VOICE_DIAGNOSTICS=oldFlag;if(oldRender===undefined)delete process.env.RENDER;else process.env.RENDER=oldRender;}
 });
