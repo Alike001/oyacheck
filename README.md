@@ -1,137 +1,114 @@
-# OyaCheck — chat-first link evidence assistant (v0.9)
+# OyaCheck — Check the link. Know the signs.
 
-**Current status: local prototype. Not a comprehensive phishing detector or a completed Celo mainnet submission.**
+**A digital-safety assistant for Nigerians, built on Celo for the Agents on Open Rails hackathon · Build with buy track.**
 
-The assistant accepts links and forwarded messages, supplies deterministic evidence-based findings, and answers English/Pidgin follow-up questions through Groq when a key is configured. Version 0.6 introduced an explicit, **sandbox-only** Celo buy feature that rents an isolated browser to check the **official NCC advisory only**. It does not visit unknown links or inspect their credential forms.
+[**Try the live checker**](https://oyacheck-beta.onrender.com/app) · [Landing page](https://oyacheck-beta.onrender.com/) · [Agent metadata](https://oyacheck-beta.onrender.com/agent-registration.json) · [Real Celo mainnet payment](https://celoscan.io/tx/0x9db228c768c5a82a0eb281e4ed2a2631e6bf15da22a60bf1c786bec39b24a29a) · [Official NCC advisory](https://csirt.ncc.gov.ng/index.php/resources/security-advisories/452-phishing-campaign-impersonating-official-verifymydevice-gov-ng-device-verification-portal)
+
+> **Status (9 Nov 2026):** Public, read-only checker is deployed. A **single real Celo mainnet paid browser-service call** and resulting official NCC advisory capture have been evidenced. The transaction was successful and canonical on two RPCs at the last review; **strict settlement finality remained unverified**, and the original SDK payment status was ambiguous. Do not portray this as independently finalized settlement. No additional payment attempts are permitted under the pilot's one-shot policy. The new sunset UI is merged into `main`; its public deployment must be checked separately against Render's deployed SHA.
 
 ## How to test — start here
 
-Use Ubuntu terminal with Node 22+ and the installed `@celo/buy` CLI.
+**No wallet, funding, API key or sign-in is required to try the public product.**
 
-```zsh
+1. Open the [live OyaCheck checker](https://oyacheck-beta.onrender.com/app) (the [landing page](https://oyacheck-beta.onrender.com/) also leads to it).
+2. Select **Check a link**. Try the published phishing-example domain `secure-verifymydevice.ng`, which is discussed in the [NCC-CSIRT advisory](https://csirt.ncc.gov.ng/index.php/resources/security-advisories/452-phishing-campaign-impersonating-official-verifymydevice-gov-ng-device-verification-portal). OyaCheck analyses the **text of the URL**; it does not navigate to the submitted site.
+3. Select **Check a message** and paste a fictional forwarded message, for example: `URGENT: Verify your device now at secure-verifymydevice.ng. Send your OTP to keep your account.`
+4. Switch between **English** and **Nigerian Pidgin** explanations, inspect the warning signals and evidence links, and review the recommended next steps. Try the provided examples, keyboard controls and mobile layout.
+5. Inspect the [onchain payment transaction](https://celoscan.io/tx/0x9db228c768c5a82a0eb281e4ed2a2631e6bf15da22a60bf1c786bec39b24a29a), the [official NCC source](https://csirt.ncc.gov.ng/index.php/resources/security-advisories/452-phishing-campaign-impersonating-official-verifymydevice-gov-ng-device-verification-portal), and [public agent registration metadata](https://oyacheck-beta.onrender.com/agent-registration.json) as separate evidence of the paid-service pilot and agent identity.
+6. **Do not attempt a new paid transaction** to test the product. The live website deliberately blocks financial and diagnostic execution endpoints. The genuine paid pilot has already consumed its only allowed attempt.
+
+**Supported network for the mainnet evidence:** Celo Mainnet, chain ID **42220**. Sandbox experiments on Celo Sepolia are historical tests and do **not** count as qualifying mainnet payment evidence.
+
+### Run locally
+
+Requirements: Node.js **22.13+ and below 25**, npm, and a modern browser. Public link/message checking does not require a wallet, Groq key or buy service.
+
+```bash
 git clone https://github.com/Alike001/oyacheck.git
 cd oyacheck
+npm ci
 npm run check
 npm test
-read -rs 'GROQ_API_KEY?Groq API key: '
-echo
-export GROQ_API_KEY
 npm run dev
 ```
 
-Visit http://localhost:4173. Submit the reported phishing example; ask a question; switch English/Pidgin. To test automatic speech stopping, tap **Speak**, say one sentence, and pause for about 1.5 seconds without touching Stop. Ordinary questions automatically submit and speak a reply; dictated URLs are held for review. The labels `LIVE AI · GROQ` and `OFFLINE GUIDANCE · NOT AI` must remain accurate.
+Open `http://localhost:4173`. Optional explanation and voice services depend on available browser support and separately configured service credentials; text checking remains the reliable fallback. Never place credentials in screenshots or commit them to source control. Tests are designed not to make paid purchases.
 
-### Optional Celo Sepolia source inspection (uses TEST USDC)
+## The problem and the approach
 
-**Do not attempt this until you want to make one more paid sandbox test.** The flow is disabled by default and all tests can run without it. If you choose to test the paid integration, stop the server, then run:
+People receive convincing phishing URLs and forwarded messages that imitate official services, ask for one-time passwords or create false urgency. OyaCheck makes the warning signs easier to understand rather than pretending to provide a universal phishing verdict.
 
-```zsh
-cd ~/Desktop/celo/official-link-agent
-BUY_BROWSER_SANDBOX=1 npm run dev
-```
+- **Link checking:** deterministic hostname parsing, suspicious URL patterns, lookalike indicators and narrow curated source matches.
+- **Forwarded-message checking:** warnings for urgency, payment/OTP requests and social-engineering language.
+- **Understandable guidance:** English/Pidgin explanations, optional AI-assisted wording and prepared offline fallback; deterministic findings remain authoritative.
+- **Accessibility:** keyboard-friendly input and optional voice controls, with text fallback. Actual physical microphone transcription and Pidgin speech quality have **not** been independently accepted across devices.
+- **Source transparency:** official NCC evidence is identified separately from heuristic suspicion. **No known threat found does not mean a URL is safe.**
 
-For Groq in the same terminal, export `GROQ_API_KEY` before starting as above. Open the app from **http://localhost:4173 on the same machine**. Scan the `secure-verifymydevice.ng` example, then use the new **LIVE OFFICIAL SOURCE CHECK · CELO BUY** panel in the evidence desk.
+OyaCheck **does not** open arbitrary user-submitted websites, fill forms, collect OTPs or guarantee safety. The paid browser pilot opened only a fixed official advisory URL, not the suspicious phishing site itself.
 
-1. Click **Get free sandbox quote**. This retrieves the live **Celo Sepolia test USDC** price; it does not sign a payment.
-2. Read the quoted price. The server enforces a **maximum of 0.01 TEST USDC per purchase**, at most **three test purchases per server day**, and **0.02 TEST USDC total** per running process. All these limits are process-memory test protections, not a production billing system.
-3. Click **Approve ... test USDC** and confirm in the in-app payment dialog. Only then will it purchase one 1-minute browser session. Session commands do not add further fees. There are **no automatic payment retries**.
-4. The browser is only permitted to open the exact official NCC-CSIRT advisory URL. It retrieves the final URL, title, source text and, if possible, a screenshot. The result presents the gateway transaction identifier and whether the page text actually mentions the examined hostname.
-5. For settlement confirmation, run separately: `buy --sandbox receipts --account sandbox --resolve`. Do not repurchase if a paid inspection is incomplete: check receipts first.
+## Genuine Build with buy — one paid mainnet investigation
 
-The feature is automatically **disabled for non-local connections** and has **no mainnet mode**. `BUY_BROWSER_SANDBOX=1` does not grant permission to spend real funds. Temporary browser credentials stay on the server and are never returned to the UI. Session screenshots expire from memory after 2 minutes.
+The dedicated local OyaCheck operator used **buy** to acquire a **one-minute external browser session** from `buy-browser-worker` (external **Agent 9894**) for a useful, fixed task: retrieve the current content of an official Nigerian Communications Commission cyber-safety advisory.
 
-### Why are we limiting the browser to the advisory?
+| Proof field | Verified / recorded value |
+| --- | --- |
+| Network | Celo Mainnet (`42220`) |
+| External service | `buy-browser-worker`, Agent `9894` |
+| Request | `POST https://gateway.usebuy.ai/v1/browser/sessions` |
+| Exact body | `{"durationMinutes":1}` |
+| Paid amount | **3,606 atomic = 0.003606 native USDC** |
+| USDC token | `0xceba9300f2b948710d2653dd7b07f33a8b32118c` |
+| Dedicated payer | `0x95c21bE84c5aA943A7c451FBf85842BB5373d756` |
+| Recipient | `0x20faAca5F980E29639A0FCC6dcA6988E18ed333B` |
+| Mainnet transaction | [`0x9db228c768c5a82a0eb281e4ed2a2631e6bf15da22a60bf1c786bec39b24a29a`](https://celoscan.io/tx/0x9db228c768c5a82a0eb281e4ed2a2631e6bf15da22a60bf1c786bec39b24a29a) |
+| Captured public source | [NCC-CSIRT phishing advisory](https://csirt.ncc.gov.ng/index.php/resources/security-advisories/452-phishing-campaign-impersonating-official-verifymydevice-gov-ng-device-verification-portal) |
+| Evidence timestamp | **2026-11-09 07:18:14.347 UTC** |
+| Captured content | **3,866 characters**, verified local SHA-256 `b2bbaa36b9a9d60a93f9e5889d64022ecfeee85249c6a967b8aea95f4e99e0a7` |
+| Last reported pilot balance / cap | **1,394 atomic USDC remaining / spending cap ZERO** |
+| Settlement caution | **Successful canonical transfer, but strict finalized settlement not yet verified; original SDK status ambiguous** |
 
-Unknown or hostile websites can redirect to private addresses, attempt to steal credentials, deliver files, and contain prompt-injection instructions. The rented browser blocks private/local direct addresses, but it does not by itself prove every untrusted redirect is safe to inspect. Until a stronger redirection and DNS-rebinding guard is tested, our app will **not** open user-submitted suspicious links. The source check confirms published evidence, not what an unknown website currently displays.
+Independent read-only RPC checks correlated the exact native USDC transfer, authorization nonce, journal reservation and gateway receipt with the paid browser evidence. The captured page URL, title, text, timestamp and content hash were locally correlated; the capture is **not a provider-signed attestation** and is **not a new deterministic finding about the suspicious site**.
 
-The screenshot and live-source check do not automatically update the deterministic verdict or claim that phishing forms were examined. Unknown still means unknown. No private details, form submissions, logins, or credential inputs are part of this version.
+The local operator used a bound HTTP 402 challenge, exact typed-data validation, an explicit human confirmation, a durable reservation before signing, no automatic retry, journal recovery and post-attempt cap reset. **One lifetime attempt has been consumed**. Neither the browser UI nor this README provides a public payment endpoint. The sole-host pilot is deliberately not deployed on ephemeral Render hosting.
 
-## Important scope and AI limitations
+**Judging limitations:** The mainnet payer is **different from the ERC-8004 registration wallet**; whether that qualifies under the track's payer rules remains unconfirmed. Evidence from an independent external end user has not been established. Do not infer independent-user adoption from a single owner-operated demonstration.
 
-- Known phishing: exact hostname from NCC-CSIRT advisory `NCC-CSIRT-2610-040`, October 30, 2026. That is a grounded published finding, not a live crawl.
-- Official hostname: matches a documented host; this is **not** certification of the page or payment request.
-- Suspicious signals and unverified findings are not equivalent to a confirmed phishing incident.
-- Groq handles language and follow-up explanations and cannot override the deterministic verdict. If unavailable, replies are clearly marked offline guidance.
-- The app keeps its conversation in browser memory and does not use a database. Do not paste passwords, OTPs, NIN, BVN or payment credentials.
-- As of this version, **no Celo mainnet buy payment, ERC-8004 identity or independent-user activity has been verified**.
+## Celo agent identity
 
-## Project files
+- **ERC-8004 Agent ID:** `10051`
+- **Registered agent wallet:** `0x9Ceaa6aBFb2bC1aC202f96496Cdc683d86Bc458a`
+- **Registry:** `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432` on Celo Mainnet
+- **Registration transaction:** [`0x56b7126b6040de24af3d78017e913aac6ff749ba05878e4776a1437e314de74c`](https://celoscan.io/tx/0x56b7126b6040de24af3d78017e913aac6ff749ba05878e4776a1437e314de74c)
+- **Public agent metadata:** [`/agent-registration.json`](https://oyacheck-beta.onrender.com/agent-registration.json)
 
-- `server.mjs`: Node HTTP backend, security headers, request limits, local-only sandbox routes.
-- `lib/analyze.mjs`: authoritative-host and URL-pattern analysis.
-- `lib/general.mjs`, `lib/chat.mjs`, `lib/explain.mjs`: Groq explanations and follow-up logic.
-- `lib/buy-browser.mjs`: free quote, explicit capped sandbox purchase, allowlisted official-source inspection, ephemeral screenshot.
-- `lib/voice.mjs`: opt-in short audio transcription through Groq Whisper; no audio persistence.
-- `public/`: OyaCheck conversation interface, voice controls and evidence desk.
-- `test/`: deterministic, API and security-gate tests; never calls a paid service during `npm test`.
-- `docs/`: source registry and release gates.
+The registered wallet is associated with the Loops House entry; the separate named local buy account performed the paid-service transaction. The public agent metadata correctly reports `x402Support: false` because the hosted checker does **not** expose public payment execution.
 
-## Hackathon next gates
+## Architecture and security boundaries
 
-1. Verify the optional sandbox source-inspection integration end to end using a fresh quote, capture a real page title, screenshot, evidence and receipt.
-2. Decide how to make paid browser inspection essential to a real user task rather than redundant with free checks. Do **not** claim it detects live credential-harvest patterns until we implement safe unknown-site handling.
-3. Deploy publicly with proper security review, register ERC-8004, conduct real mainnet x402 purchases for useful external work, record transaction proofs, and find qualified independent users.
-4. Add a polished landing page only after the main task is working. Keep the current original visual identity and do not reproduce any reference brand or interface.
+| Component | Responsibility |
+| --- | --- |
+| `public/` | Responsive landing/checker UI, input, bilingual feedback, optional voice interfaces |
+| `server.mjs` | HTTP routes, request validation, response headers and production read-only policy |
+| `lib/analyze.mjs` | Deterministic URL/message signals and curated known-source matching |
+| `lib/explain.mjs`, `lib/chat.mjs`, `lib/general.mjs` | Optional natural-language explanations and fallback |
+| `lib/demo-browser.mjs`, `lib/demo-inspection.mjs` | Local-only controlled synthetic browser lab; not open-web inspection |
+| `lib/mainnet-*.mjs` | Locally gated mainnet preparation and reconciliation logic; not a publicly enabled purchasing API |
+| `test/` | Analyzer, API, safety-gate and browser-lab tests |
+| `render.yaml` | Render read-only production configuration with disabled financial routes |
 
-Hackathon deadline: **Monday, November 9, 2026, 09:00 GMT (10:00 WAT)**.
+Safety boundaries: never automatically visit submitted suspicious URLs; never share private session links, payment authorizations, wallet keys or personal identification documents; never retry an uncertain paid request. Public financial and diagnostic routes remain denied. Optional AI cannot override source-grounded deterministic findings.
 
+## Demo, screenshots and reviewer notes
 
-## v0.8 — automatic voice Q&A (English + experimental Pidgin)
+The [live app](https://oyacheck-beta.onrender.com/) is the functional browser experience for judges. Submission screenshots were captured from the implemented checker at desktop and mobile widths and uploaded separately to Loops House. The [Celo transaction](https://celoscan.io/tx/0x9db228c768c5a82a0eb281e4ed2a2631e6bf15da22a60bf1c786bec39b24a29a) and [NCC source page](https://csirt.ncc.gov.ng/index.php/resources/security-advisories/452-phishing-campaign-impersonating-official-verifymydevice-gov-ng-device-verification-portal) can be examined without a wallet.
 
-Product working name: **OyaCheck**. The internal directory `official-link-agent` stays unchanged for drop-in upgrades.
+For judging, evaluate the existing real journey and limitations, not unsupported claims of live unknown-website browsing, guaranteed phishing detection, finalized financial settlement, physical voice accuracy or independent-user adoption.
 
-**Historical v0.8 behavior (superseded by v0.9 below):** With a Groq key loaded, tap **Speak**, say a short question, and tap **Stop** (or let the 18-second recording cap stop it). Transcription is sent to the OyaCheck server, which uses Groq Whisper (`whisper-large-v3-turbo`) to return text. Ordinary spoken questions are **sent automatically** to Groq GPT-OSS 120B with no additional Send click. The response appears in chat and is **spoken aloud automatically** using the device's `SpeechSynthesis` voice. Both settings are on by default and can be turned off independently.
+## Next steps
 
-**Review gate:** A dictated website address, email, long number, apparent secret, or a recording added to an existing unsent draft is **never auto-sent**. The transcription is placed in the composer for correction and explicit Send. This avoids checking the wrong domain or leaking credentials because transcription can be inaccurate. Speech never triggers browser rental or a Celo payment. The chat backend still validates and filters incoming questions.
+- Improve safe, observable investigation of untrusted websites only after a separate browser-isolation/security review.
+- Validate accessibility, real speech recognition and Pidgin quality on physical devices.
+- Add independently observed end-user testing and improve evidence provenance.
+- Complete any external payer-eligibility clarification without creating further transactions from the consumed pilot.
 
-**Fallbacks:** If the Groq transcription service is not configured, OyaCheck uses the browser's `SpeechRecognition` API when available. Browser speech services may process audio externally. If Groq chat is unreachable or rate-limited, OyaCheck clearly labels the text as offline guidance (not live AI) and does not claim a live investigation. A **Listen** button remains on replies if browser auto-play of speech is blocked. If audio cannot play, text remains usable.
-
-**Privacy and limits:** Each clip is limited to 18 seconds and 2 MB; no recording is stored by OyaCheck. Transcription uses the configured Groq account and its available quota. In v0.8 there was no silence detection; v0.9 adds opt-in local microphone-level analysis and natural-pause auto-stop (see below). Pidgin transcription and speech pronunciation remain experimental and depend on model/device voices.
-
-**Important:** Voice never changes deterministic security findings. Dictated links always require human review; website navigation and spending never follow from speech alone. Automatic voice chat may use Groq API quota, so it is not guaranteed to stay free at high usage.
-
-### v0.8 acceptance checklist
-
-- Tap Speak, say `How can I know if a website is fake?`, tap Stop. The user question should appear **without pressing Send**, followed by `LIVE AI · GROQ` if the provider responds.
-- The response should be **read aloud automatically** when Speak answers is checked. If browser playback fails, use its Listen button.
-- Switch to Pidgin and ask `Abeg how I go know say this link na scam?` — transcribed words and pronunciation require manual assessment.
-- Dictate a domain such as `example.org`: it must remain **editable**, not auto-send.
-- Disable `Auto-send voice questions`, then record again: the transcript must stay editable until Send.
-- Disable `Speak answers`: responses must remain readable without automatic audio.
-- If Groq is rate-limited, a message must visibly say `OFFLINE GUIDANCE · NOT AI`. It may be read aloud, but it is never described as a fresh AI answer.
-
-**Verification scope:** Node tests cover the voice decision policy and API; a Chromium browser simulation with mocked microphone, transcription, AI, and speech playback verified the end-to-end UI handoff. Actual microphone acoustics, Groq free-tier availability, and Pidgin speech quality must be checked on the user's device.
-
-
-## v0.9 — hands-free end-of-speech detection (English + experimental Pidgin)
-
-**How it works:** Tap **Speak** only once. Your browser monitors microphone amplitude locally with a Web Audio analyser while MediaRecorder buffers a short clip. Once it detects speech and then about **1.5 seconds of silence**, it ends the recording automatically. A short burst of sound does not qualify as speech; if no speech is detected, it stops and asks you to retry rather than paying to transcribe an empty clip. A hard **18-second limit** also applies. You may still tap **Stop** to finish manually.
-
-Next, the app sends the audio clip to the existing Groq Whisper transcription endpoint. Ordinary safety questions automatically enter the conversation, and the response is read aloud if **Speak answers** is checked. This depends on the network, your Groq quota and available device voices; it is not truly instantaneous. Voice never initiates a paid Celo Buy purchase.
-
-**Privacy/safety:** Listening begins **only after tapping Speak**; it stops after end-of-speech. Audio is sent to Groq only after recording finishes (unless browser-native speech fallback is used). Audio isn't saved by this application. Spoken website addresses and potential secrets still require text review and explicit Send before processing. Background noise, a quiet microphone, speech pauses and unsupported browser APIs can affect the detector. The browser's manual Stop control is retained, with a clear fallback message.
-
-**Tests:** 126 Node tests passed, including 9 new silence-detector and noise tests. A Chromium simulated microphone/Whisper/chat/speech synthesis flow passed the complete Speak → silence → transcription → automatic chat → spoken reply sequence. Browser navigation to live localhost was blocked by this tool environment, and a real physical microphone and real Groq transcription were not used for this test. Verify actual microphone behavior on the target device before claiming production readiness.
-
-**Practical acceptance test:** Start app with your Groq API key set in your shell; click Speak; say “How can I know if a link is fake?”; stop talking. After about 1.5 seconds of silence, it should end the recording, send, answer, and speak without a Stop or Send click. Then test Pidgin, an empty/noisy recording, a dictated URL (must remain editable), Auto-send unchecked, and a denied microphone permission. This adds no Celo payments.
-
-The app is still a limited evidence-based checking prototype. Unknown public websites are not rendered. The existing sandbox flow stays separately opt-in; the new mainnet operator pilot is disabled by default and requires separate financial approval. Mainnet receipts, qualified independent users and ERC-8004 registration are still outstanding.
-
-
-## Verified integration milestone — November 7, 2026
-
-- 132 automated tests passed locally.
-- English and experimental Pidgin voice interaction tested locally.
-- Celo Buy sandbox browser purchase confirmed on Celo Sepolia.
-- Official NCC-CSIRT advisory opened in the rented browser.
-- Live page title, evidence match and screenshot retrieved.
-- Suspicious user-submitted website was not opened.
-- No qualifying Celo mainnet payment or ERC-8004 registration has been established by this test.
-
-The sandbox evidence does not prove unknown-site inspection or production readiness.
-
-See the [current buy integration and readiness audit](docs/BUY-INTEGRATION-AUDIT.md) for verified historical sandbox payment evidence, the production baseline, local safety repairs, and remaining mainnet submission requirements.
-
-## Mainnet operator pilot — prepared, not activated
-
-The [mainnet release and single-purchase approval plan](docs/MAINNET-RELEASE-PLAN.md) documents the durable ledger, named-wallet requirements, local-only preparation flow, independent receipt reconciliation and verified mock financial tests. Browser review requests cannot execute payments. No genuine mainnet purchase was made during this preparation.
+**Hackathon:** [Celo Agents on Open Rails — Loops House](https://www.loops.house/agents-on-open-rails/) · Deadline: **November 9, 2026, 09:00 UTC (10:00 WAT)**.
