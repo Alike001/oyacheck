@@ -286,7 +286,13 @@ for(const button of document.querySelectorAll('[data-landing-mode]'))button.addE
   $('#landing-label').textContent=landingMode==='url'?'Website address':'Forwarded message';
   $('#landing-input').placeholder=landingMode==='url'?'Paste a website address here…':'Paste the message you received…';
   $('#landing-guidance').textContent=landingMode==='url'?'Paste one public URL or domain. We won’t open it.':'Messages with or without a link. Remove private details.';
-  document.querySelector('.landing-submit').textContent=landingMode==='url'?'Check this link →':'Check this message →';
+  document.querySelector('.landing-submit').textContent='Check now ↗';
+});
+for(const button of document.querySelectorAll('[data-landing-example]'))button.addEventListener('click',()=>{
+  if(isBusy||recordState)return;
+  document.querySelector(`[data-landing-mode="${button.dataset.mode}"]`).click();
+  $('#landing-input').value=button.dataset.landingExample;
+  $('#landing-input').focus({preventScroll:true});
 });
 $('#landing-form').addEventListener('submit',event=>{event.preventDefault();if(isBusy||recordState)return;const value=$('#landing-input').value;selectCheckMode(landingMode);input.value=value;navigate('/app');send(value);});
 $('#retry-check').addEventListener('click',()=>send(input.value));

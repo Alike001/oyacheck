@@ -31,7 +31,7 @@ export async function verifyProductBrowser(page,origin,artifacts){
     check(await page.locator('#technical-reasons li').allTextContents().then(list=>JSON.stringify(list)===JSON.stringify(data.reasons.map(x=>x.text))),'Full provenance lost');
     if(data.host)check(await page.locator('#finding-host').textContent()===data.host,'Wrong actual hostname');
   };
-  await page.goto(origin+'/');await page.locator('[data-voice-dock=landing] [data-session-language=pcm]').click();
+  await page.goto(origin+'/');await page.locator('.landing-voice > summary').click();await page.locator('[data-voice-dock=landing] [data-session-language=pcm]').click();
   await page.locator('[data-landing-mode=message]').click();const landingText='Final notice: your bank account is blocked. Send your OTP immediately.';await page.locator('#landing-input').fill(landingText);
   await record(()=>page.locator('.landing-submit').click());await page.waitForFunction(()=>!document.querySelector('#send-button').disabled&&!document.querySelector('#evidence-result').hidden);
   check(new URL(page.url()).pathname==='/app'&&await page.locator('#message-input').inputValue()===landingText,'Landing lost submitted draft');check(responses.at(-1).language==='pcm'&&responses.at(-1).status==='suspicious','Landing language/mode not applied');await verifyExact();
@@ -58,7 +58,7 @@ export async function verifyProductBrowser(page,origin,artifacts){
     check(!await page.locator('#input-panel').evaluate(e=>e.open),'Result competes with expanded editor');
     check(await page.locator('#plain-language').evaluate(e=>e.open)&&await page.locator('#technical-details').evaluate(e=>!e.open),'Secondary detail not disclosed');
     await capture('link',width);
-    const calls=requests.length;await page.locator('.main-nav a[href="/#how"]').click();await page.goBack();check(requests.length===calls,'History re-submitted');check(await page.locator('#message-input').inputValue()==='https://example.org@unrelated.example/account','History lost draft');
+    const calls=requests.length;await page.locator('.footer a[href="/#how"]').click();await page.goBack();check(requests.length===calls,'History re-submitted');check(await page.locator('#message-input').inputValue()==='https://example.org@unrelated.example/account','History lost draft');
     await scan('Final notice: your bank account is blocked. Send your OTP immediately.','message');await verifyExact();await fit(width);await capture('message',width);
     check(responses.at(-1).status==='suspicious'&&responses.at(-1).host===null,'Message invented hostname/verdict');
     await page.locator('#new-check').click();check(await page.locator('#message-input').inputValue()==='','Another-check did not clear input');check(await page.locator('#evidence-result').isHidden(),'Stale result remained');
@@ -87,7 +87,7 @@ export async function verifyProductBrowser(page,origin,artifacts){
   const copied=await page.evaluate(()=>navigator.clipboard.readText());check(copied.includes(responses.at(-1).label)&&copied.includes(responses.at(-1).reasons[0].text),'Copy lost actual evidence');
   await edit();await page.locator('#message-input').fill('An unsent edit');const backCalls=requests.length;await page.locator('#back-to-result').click();
   check(!await page.locator('#input-panel').evaluate(e=>e.open)&&requests.length===backCalls,'Back to result submitted draft');await page.locator('#input-panel > summary').click();check(await page.locator('#message-input').inputValue()==='An unsent edit','Edit draft lost');
-  await page.locator('#new-check').click();await page.locator('#mic-button').click();check((await page.locator('#voice-status').textContent()).includes('unavailable'),'Missing voice availability state');
+  await page.locator('#new-check').click();await page.locator('#check-form .secondary-voice > summary').click();await page.locator('#mic-button').click();check((await page.locator('#voice-status').textContent()).includes('unavailable'),'Missing voice availability state');
   await page.evaluate(()=>Object.defineProperty(window,'SpeechRecognition',{configurable:true,value:class{start(){queueMicrotask(()=>{this.onerror({error:'not-allowed'});this.onend();});}stop(){this.onend();}}}));
   await page.locator('#mic-button').click();await page.waitForFunction(()=>document.querySelector('#voice-status').textContent.includes('not-allowed'));check(await page.locator('#send-button').isEnabled(),'Permission failure blocked typing');
   const secret='https://example.org/private?token=redesign-private-fixture';
